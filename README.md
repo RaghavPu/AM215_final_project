@@ -1,3 +1,1 @@
 # CitiBike NYC Model
-
-
