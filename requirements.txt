@@ -7,4 +7,5 @@ folium>=0.14.0
 plotly>=5.15.0
 tqdm>=4.65.0
 requests>=2.31.0
+pyyaml>=6.0
 
