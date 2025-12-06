@@ -1,0 +1,66 @@
+# CitiBike Markov Model Configuration
+# =====================================
+
+# Data paths
+data:
+  trip_data_dir: "data"
+  station_info_path: "data/stations/station_info.csv"
+  output_dir: "outputs"
+
+# Time range for analysis
+time:
+  # Date format: YYYY-MM-DD
+  start_date: "2025-09-01"
+  end_date: "2025-10-31"
+
+# Cross-validation settings
+cross_validation:
+  # Rolling window parameters
+  train_weeks: 3
+  test_weeks: 1
+  # Minimum number of folds to run
+  min_folds: 3
+
+# Station filtering
+stations:
+  # Minimum trips to include a station
+  min_trips: 100
+  # NYC bounding box for coordinate filtering
+  lat_min: 40.4
+  lat_max: 41.0
+  lng_min: -74.3
+  lng_max: -73.6
+
+# Model settings
+model:
+  # Which model to use: "baseline", "markov", etc.
+  name: "baseline"
+  
+  # Baseline model parameters
+  baseline:
+    # Uses historical average flow per (station, hour, weekend)
+    description: "Predicts flow using historical averages"
+  
+  # Markov model parameters (for future use)
+  markov:
+    # Time granularity in minutes
+    time_bin_minutes: 60
+    # Whether to use separate matrices for weekday/weekend
+    separate_weekday_weekend: true
+
+# Evaluation settings
+evaluation:
+  # Time frequency for flow aggregation
+  freq: "1h"
+  
+  # Metrics computed:
+  # - mae: Mean Absolute Error on net flow
+  # - rmse: Root Mean Squared Error on net flow  
+  # - direction_accuracy: % correct sign predictions
+  # - correlation: Pearson correlation
+  # - high_flow_mae: MAE on high-flow periods (top 25%)
+
+# Logging
+logging:
+  level: "INFO"
+  save_predictions: true

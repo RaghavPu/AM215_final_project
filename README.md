@@ -1,3 +1,2 @@
-# AM215_final_project
+# CitiBike NYC Model
 
-Final project for AM215

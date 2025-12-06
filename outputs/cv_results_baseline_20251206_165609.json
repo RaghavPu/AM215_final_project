@@ -1,0 +1,190 @@
+{
+  "model": "baseline",
+  "config": {
+    "data": {
+      "trip_data_dir": "data",
+      "station_info_path": "data/stations/station_info.csv",
+      "output_dir": "outputs"
+    },
+    "time": {
+      "start_date": "2025-09-01",
+      "end_date": "2025-10-31"
+    },
+    "cross_validation": {
+      "train_weeks": 3,
+      "test_weeks": 1,
+      "min_folds": 3
+    },
+    "stations": {
+      "min_trips": 100,
+      "lat_min": 40.4,
+      "lat_max": 41.0,
+      "lng_min": -74.3,
+      "lng_max": -73.6
+    },
+    "model": {
+      "name": "baseline",
+      "baseline": {
+        "description": "Predicts flow using historical averages"
+      },
+      "markov": {
+        "time_bin_minutes": 60,
+        "separate_weekday_weekend": true
+      }
+    },
+    "evaluation": {
+      "freq": "1h"
+    },
+    "logging": {
+      "level": "INFO",
+      "save_predictions": true
+    }
+  },
+  "fold_results": [
+    {
+      "mae": 1.6089683270820996,
+      "rmse": 2.9157060484422295,
+      "mape": 0.544696256951392,
+      "direction_accuracy": 0.39750718343532715,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.6138531099350261,
+      "station_mae_mean": 1.6089683270820996,
+      "station_mae_std": 1.151064052232698,
+      "station_rmse_mean": 2.3445354847145516,
+      "high_flow_mae": 4.46318111777159,
+      "high_flow_direction_acc": 0.7169997668070397,
+      "fold_id": 0,
+      "train_start": "2025-09-01",
+      "test_start": "2025-09-22"
+    },
+    {
+      "mae": 1.6191476022314346,
+      "rmse": 2.8595879305910588,
+      "mape": 0.5315546789441656,
+      "direction_accuracy": 0.4057681340615472,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.6616214462953107,
+      "station_mae_mean": 1.6191476022314344,
+      "station_mae_std": 1.1344453886395978,
+      "station_rmse_mean": 2.339002441655195,
+      "high_flow_mae": 4.425294078553865,
+      "high_flow_direction_acc": 0.7213132185817771,
+      "fold_id": 1,
+      "train_start": "2025-09-08",
+      "test_start": "2025-09-29"
+    },
+    {
+      "mae": 1.5199646494556676,
+      "rmse": 2.721949311113549,
+      "mape": 0.5475777031089675,
+      "direction_accuracy": 0.38971233357460905,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.618571998273852,
+      "station_mae_mean": 1.5199646494556673,
+      "station_mae_std": 1.0816641586792526,
+      "station_rmse_mean": 2.206658334537967,
+      "high_flow_mae": 4.291974788229154,
+      "high_flow_direction_acc": 0.7266500060219198,
+      "fold_id": 2,
+      "train_start": "2025-09-15",
+      "test_start": "2025-10-06"
+    },
+    {
+      "mae": 1.5302210597120778,
+      "rmse": 2.779054395800842,
+      "mape": 0.5389256317994522,
+      "direction_accuracy": 0.3856764492992038,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.5874753497393121,
+      "station_mae_mean": 1.5302210597120778,
+      "station_mae_std": 1.1078078369688518,
+      "station_rmse_mean": 2.2427710822252362,
+      "high_flow_mae": 4.437309841469943,
+      "high_flow_direction_acc": 0.7140906157609593,
+      "fold_id": 3,
+      "train_start": "2025-09-22",
+      "test_start": "2025-10-13"
+    },
+    {
+      "mae": 1.488443808353988,
+      "rmse": 2.651352581693907,
+      "mape": 0.5159589134493208,
+      "direction_accuracy": 0.391508192406396,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.65119067036294,
+      "station_mae_mean": 1.4884438083539882,
+      "station_mae_std": 1.0567816392395686,
+      "station_rmse_mean": 2.159961096274248,
+      "high_flow_mae": 4.278093756725558,
+      "high_flow_direction_acc": 0.7236896167165581,
+      "fold_id": 4,
+      "train_start": "2025-09-29",
+      "test_start": "2025-10-20"
+    }
+  ],
+  "summary": {
+    "mae": {
+      "mean": 1.5533490893670536,
+      "std": 0.051546223889767755
+    },
+    "rmse": {
+      "mean": 2.785530053528317,
+      "std": 0.09435931083232592
+    },
+    "mape": {
+      "mean": 0.5357426368506596,
+      "std": 0.011307539662880367
+    },
+    "direction_accuracy": {
+      "mean": 0.39403445855541663,
+      "std": 0.006995113475949709
+    },
+    "n_predictions": {
+      "mean": 364728.0,
+      "std": 0.0
+    },
+    "n_stations": {
+      "mean": 2171.0,
+      "std": 0.0
+    },
+    "n_time_periods": {
+      "mean": 168.0,
+      "std": 0.0
+    },
+    "correlation": {
+      "mean": 0.6265425149212882,
+      "std": 0.026791254255474656
+    },
+    "station_mae_mean": {
+      "mean": 1.5533490893670536,
+      "std": 0.051546223889767664
+    },
+    "station_mae_std": {
+      "mean": 1.1063526151519938,
+      "std": 0.03422641007906185
+    },
+    "station_rmse_mean": {
+      "mean": 2.25858568788144,
+      "std": 0.07283897817812436
+    },
+    "high_flow_mae": {
+      "mean": 4.379170716550022,
+      "std": 0.07795505321080204
+    },
+    "high_flow_direction_acc": {
+      "mean": 0.7205486447776508,
+      "std": 0.0045161390697529245
+    }
+  },
+  "timestamp": "20251206_165609"
+}
