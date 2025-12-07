@@ -1,0 +1,205 @@
+======================================================================
+CitiBike Data Download & Parquet Conversion
+======================================================================
+Years: [2024, 2025]
+Keep intermediates: False
+
+Total months to process: 22
+
+
+============================================================
+Processing: 2024-01
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202401-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-02
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202402-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-03
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202403-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-04
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202404-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-05
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202405-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-06
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202406-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-07
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202407-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-08
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202408-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-09
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202409-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-10
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202410-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-11
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202411-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2024-12
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202412-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-01
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202501-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-02
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202502-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-03
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202503-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-04
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202504-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-05
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202505-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-06
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202506-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-07
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202507-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-08
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202508-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-09
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202509-citibike-tripdata.csv.zip
+
+============================================================
+Processing: 2025-10
+============================================================
+[1/4] Downloading from S3...
+
+  Error downloading: 404 Client Error: Not Found for url: https://s3.amazonaws.com/tripdata/202510-citibike-tripdata.csv.zip
+
+======================================================================
+SUMMARY
+======================================================================
+Successful: 0/22
+Failed: 22
+
+Failed months:
+  - 2024-01: download_failed
+  - 2024-02: download_failed
+  - 2024-03: download_failed
+  - 2024-04: download_failed
+  - 2024-05: download_failed
+  - 2024-06: download_failed
+  - 2024-07: download_failed
+  - 2024-08: download_failed
+  - 2024-09: download_failed
+  - 2024-10: download_failed
+  - 2024-11: download_failed
+  - 2024-12: download_failed
+  - 2025-01: download_failed
+  - 2025-02: download_failed
+  - 2025-03: download_failed
+  - 2025-04: download_failed
+  - 2025-05: download_failed
+  - 2025-06: download_failed
+  - 2025-07: download_failed
+  - 2025-08: download_failed
+  - 2025-09: download_failed
+  - 2025-10: download_failed
+
+✓ Stats saved to: /Users/anastasiaahani/classes/AM215/git/AM215_final_project/data/conversion_stats.json
+
+======================================================================
+✓ CONVERSION COMPLETE!
+======================================================================
+
+Your Parquet files are in: data/parquet/trips/
+You can now use DuckDB to query them efficiently!
+
+Next steps:
+  1. Verify data: python src/verify_data.py
+  2. Start analysis: jupyter notebook notebooks/eda.ipynb
