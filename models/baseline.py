@@ -1,4 +1,4 @@
-"""Baseline model using historical average flow to predict inventory."""
+"""Temporal Flow model using historical average flow conditioned on time."""
 
 import pandas as pd
 import numpy as np
@@ -6,15 +6,16 @@ from typing import Dict, Any
 from .base import BaseModel
 
 
-class BaselineModel(BaseModel):
-    """Simple baseline model using historical average net flow.
+class TemporalFlowModel(BaseModel):
+    """Temporal flow model using time-conditioned historical average net flow.
     
     This model:
-    1. Computes average hourly net flow (arrivals - departures) per station
-    2. Predicts future inventory by applying average flow to initial state:
-       inventory[t+1] = inventory[t] + avg_net_flow
+    1. Computes average hourly net flow (arrivals - departures) per station,
+       conditioned on hour of day and weekend/weekday
+    2. Predicts future inventory by applying the appropriate average flow:
+       inventory[t+1] = inventory[t] + avg_net_flow[station, hour, is_weekend]
     
-    This serves as a baseline to compare more sophisticated models against.
+    This captures both station-specific and temporal patterns in bike flow.
     """
     
     def __init__(self, config: dict):

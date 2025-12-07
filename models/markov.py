@@ -1,21 +1,25 @@
-"""Markov Chain model for bike flow prediction."""
+"""Markov Chain model for bike inventory prediction using Monte Carlo simulation."""
 
 import pandas as pd
 import numpy as np
 from scipy import sparse
 from typing import Dict, Any, Tuple
+from tqdm import tqdm
 from .base import BaseModel
 
 
 class MarkovModel(BaseModel):
-    """Markov Chain model for predicting bike station flows.
+    """Markov Chain model for predicting bike station inventory.
     
     This model:
     1. Builds time-dependent transition matrices P[i→j | hour, is_weekend]
-    2. Estimates departure rates per station per time context
-    3. Predicts flow by routing departures through the transition matrix
+    2. Learns departure rates per station per time context
+    3. Simulates multiple random walks and averages predictions
     
-    Key insight: Models WHERE bikes go, not just how many leave.
+    Key features:
+    - State-dependent: Departures depend on current inventory
+    - Capacity-aware: Arrivals capped at station capacity
+    - Monte Carlo: Average over N simulations for robust predictions
     """
     
     def __init__(self, config: dict):
@@ -25,6 +29,7 @@ class MarkovModel(BaseModel):
         model_config = config.get("model", {}).get("markov", {})
         self.smoothing_alpha = model_config.get("smoothing_alpha", 0.0)
         self.min_transitions = model_config.get("min_transitions", 1)
+        self.n_simulations = model_config.get("n_simulations", 50)
         
         # Learned parameters
         self.stations = []
@@ -34,12 +39,12 @@ class MarkovModel(BaseModel):
         # Transition matrices: (hour, is_weekend) -> sparse matrix
         self.transition_matrices = {}
         
-        # Departure rates: (hour, is_weekend) -> {station: rate}
-        self.departure_rates = {}
+        # Departure rates: (hour, is_weekend) -> array of rates per station
+        self.departure_rate_arrays = {}
         
         # Fallback for missing contexts
         self.global_transition_matrix = None
-        self.global_departure_rates = {}
+        self.global_departure_rates = None
         
     def fit(
         self,
@@ -58,6 +63,11 @@ class MarkovModel(BaseModel):
         self.station_to_idx = {s: i for i, s in enumerate(self.stations)}
         self.idx_to_station = {i: s for i, s in enumerate(self.stations)}
         n_stations = len(self.stations)
+        
+        # Build capacity array for vectorized operations
+        self.capacity_array = np.array([
+            self.station_capacities.get(s, 30) for s in self.stations
+        ], dtype=float)
         
         print(f"  Building transition matrices for {n_stations} stations...")
         
@@ -123,18 +133,21 @@ class MarkovModel(BaseModel):
             # Create sparse matrix
             P = sparse.csr_matrix(
                 (ctx_trans["prob"].values, 
-                 (ctx_trans["from_idx"].values, ctx_trans["to_idx"].values)),
+                 (ctx_trans["from_idx"].values.astype(int), 
+                  ctx_trans["to_idx"].values.astype(int))),
                 shape=(n_stations, n_stations)
             )
             
             self.transition_matrices[(hour, is_weekend)] = P
             
-            # Compute departure rates
+            # Compute departure rates as array (vectorized for simulation)
             n_days = days_per_context.get((hour, is_weekend), 1)
-            self.departure_rates[(hour, is_weekend)] = {
-                self.idx_to_station[int(row["from_idx"])]: row["departures"] / n_days
-                for _, row in ctx_deps.iterrows()
-            }
+            dep_rate_array = np.zeros(n_stations)
+            for _, row in ctx_deps.iterrows():
+                idx = int(row["from_idx"])
+                dep_rate_array[idx] = row["departures"] / n_days
+            
+            self.departure_rate_arrays[(hour, is_weekend)] = dep_rate_array
         
         # Build global fallback
         self._build_global_fallback(trips, n_stations)
@@ -142,6 +155,7 @@ class MarkovModel(BaseModel):
         self.is_fitted = True
         print(f"  Built {len(self.transition_matrices)} transition matrices")
         print(f"  Sparsity: {self._compute_avg_sparsity():.1%}")
+        print(f"  Simulations per prediction: {self.n_simulations}")
         
         return self
     
@@ -160,16 +174,16 @@ class MarkovModel(BaseModel):
         # Build sparse matrix
         self.global_transition_matrix = sparse.csr_matrix(
             (trans_counts["prob"].values,
-             (trans_counts["from_idx"].values, trans_counts["to_idx"].values)),
+             (trans_counts["from_idx"].values.astype(int), 
+              trans_counts["to_idx"].values.astype(int))),
             shape=(n_stations, n_stations)
         )
         
-        # Global departure rates
+        # Global departure rates as array
         n_hours = trips["started_at"].dt.floor("h").nunique()
-        self.global_departure_rates = {
-            self.idx_to_station[idx]: count / max(n_hours, 1)
-            for idx, count in dep_counts.items()
-        }
+        self.global_departure_rates = np.zeros(n_stations)
+        for idx, count in dep_counts.items():
+            self.global_departure_rates[int(idx)] = count / max(n_hours, 1)
     
     def _compute_avg_sparsity(self) -> float:
         """Compute average sparsity of transition matrices."""
@@ -187,6 +201,184 @@ class MarkovModel(BaseModel):
         
         return np.mean(sparsities)
     
+    def _simulate_one_walk(
+        self,
+        initial_inventory: np.ndarray,
+        times: pd.DatetimeIndex,
+        rng: np.random.Generator,
+        deterministic: bool = False,
+    ) -> np.ndarray:
+        """Simulate a single random walk.
+        
+        Args:
+            initial_inventory: Starting bike counts (array)
+            times: Timestamps to simulate
+            rng: Random number generator
+            deterministic: If True, use expected values instead of sampling
+            
+        Returns:
+            Array of shape (n_stations, n_times) with inventory trajectory
+        """
+        n_stations = len(self.stations)
+        n_times = len(times)
+        
+        # Initialize trajectory
+        trajectory = np.zeros((n_stations, n_times))
+        trajectory[:, 0] = initial_inventory
+        
+        current = initial_inventory.copy()
+        
+        for t_idx in range(1, n_times):
+            t = times[t_idx]
+            hour = t.hour
+            is_weekend = t.dayofweek in [5, 6]
+            context = (hour, is_weekend)
+            
+            # Get transition matrix and departure rates
+            P = self.transition_matrices.get(context, self.global_transition_matrix)
+            dep_rates = self.departure_rate_arrays.get(context, self.global_departure_rates)
+            
+            if P is None:
+                trajectory[:, t_idx] = current
+                continue
+            
+            if deterministic:
+                # --- DETERMINISTIC: Use expected values ---
+                # Departures = rate, capped at available
+                departures = np.minimum(dep_rates, current)
+                
+                # Arrivals = P.T @ departures (expected arrivals)
+                arrivals = P.T @ departures
+                
+            else:
+                # --- STOCHASTIC: Sample from distributions ---
+                # Expected departures scaled by availability
+                availability_factor = current / np.maximum(self.capacity_array, 1)
+                expected_departures = dep_rates * availability_factor
+                
+                # Sample actual departures (Poisson)
+                departures = np.minimum(
+                    rng.poisson(expected_departures),
+                    current.astype(int)
+                ).astype(float)
+                
+                # Route departures through transition matrix
+                arrivals = np.zeros(n_stations)
+                for i in range(n_stations):
+                    n_depart = int(departures[i])
+                    if n_depart > 0:
+                        probs = P.getrow(i).toarray().flatten()
+                        prob_sum = probs.sum()
+                        if prob_sum > 0:
+                            probs = probs / prob_sum
+                            destinations = rng.choice(n_stations, size=n_depart, p=probs)
+                            for dest in destinations:
+                                arrivals[dest] += 1
+            
+            # --- UPDATE INVENTORY ---
+            new_inventory = current - departures + arrivals
+            
+            # Clip to [0, capacity]
+            new_inventory = np.clip(new_inventory, 0, self.capacity_array)
+            
+            current = new_inventory
+            trajectory[:, t_idx] = current
+        
+        return trajectory
+    
+    def predict_inventory(
+        self,
+        initial_inventory: pd.Series,
+        start_time: pd.Timestamp,
+        end_time: pd.Timestamp,
+        freq: str = "1h",
+    ) -> pd.DataFrame:
+        """Predict inventory using Monte Carlo random walks.
+        
+        Runs N simulations and averages the results.
+        
+        Args:
+            initial_inventory: Starting bike count per station
+            start_time: Start time for prediction
+            end_time: End time for prediction
+            freq: Time frequency
+            
+        Returns:
+            DataFrame with predicted inventory (mean over simulations)
+        """
+        if not self.is_fitted:
+            raise ValueError("Model must be fitted before prediction")
+        
+        # Generate time periods
+        times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
+        n_times = len(times)
+        n_stations = len(self.stations)
+        
+        # Convert initial inventory to array (aligned with self.stations)
+        init_array = np.array([
+            initial_inventory.get(s, 0) for s in self.stations
+        ], dtype=float)
+        
+        # Run simulations
+        all_trajectories = np.zeros((self.n_simulations, n_stations, n_times))
+        rng = np.random.default_rng(seed=42)  # Reproducible
+        
+        # Use deterministic mode for single simulation
+        deterministic = (self.n_simulations == 1)
+        
+        for sim in range(self.n_simulations):
+            all_trajectories[sim] = self._simulate_one_walk(init_array, times, rng, deterministic)
+        
+        # Average over simulations
+        mean_trajectory = all_trajectories.mean(axis=0)
+        
+        # Convert to DataFrame
+        predictions = pd.DataFrame(
+            mean_trajectory,
+            index=self.stations,
+            columns=times,
+        )
+        
+        return predictions
+    
+    def predict_with_uncertainty(
+        self,
+        initial_inventory: pd.Series,
+        start_time: pd.Timestamp,
+        end_time: pd.Timestamp,
+        freq: str = "1h",
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Predict inventory with uncertainty bounds.
+        
+        Returns mean, lower (5th percentile), and upper (95th percentile).
+        """
+        if not self.is_fitted:
+            raise ValueError("Model must be fitted before prediction")
+        
+        times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
+        n_times = len(times)
+        n_stations = len(self.stations)
+        
+        init_array = np.array([
+            initial_inventory.get(s, 0) for s in self.stations
+        ], dtype=float)
+        
+        all_trajectories = np.zeros((self.n_simulations, n_stations, n_times))
+        rng = np.random.default_rng(seed=42)
+        
+        for sim in range(self.n_simulations):
+            all_trajectories[sim] = self._simulate_one_walk(init_array, times, rng)
+        
+        mean_traj = all_trajectories.mean(axis=0)
+        lower_traj = np.percentile(all_trajectories, 5, axis=0)
+        upper_traj = np.percentile(all_trajectories, 95, axis=0)
+        
+        mean_df = pd.DataFrame(mean_traj, index=self.stations, columns=times)
+        lower_df = pd.DataFrame(lower_traj, index=self.stations, columns=times)
+        upper_df = pd.DataFrame(upper_traj, index=self.stations, columns=times)
+        
+        return mean_df, lower_df, upper_df
+    
     def predict_flow(
         self,
         stations: list,
@@ -194,57 +386,31 @@ class MarkovModel(BaseModel):
         end_time: pd.Timestamp,
         freq: str = "1h",
     ) -> pd.DataFrame:
-        """Predict net flow using Markov transition matrices.
-        
-        For each station i:
-        - departures[i] = historical departure rate
-        - arrivals[i] = Σ_j (departures[j] × P[j→i])
-        - net_flow[i] = arrivals[i] - departures[i]
-        """
+        """Predict net flow (legacy method, kept for compatibility)."""
         if not self.is_fitted:
             raise ValueError("Model must be fitted before prediction")
         
-        # Generate time periods
         times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
-        
-        # Filter to known stations
         known_stations = [s for s in stations if s in self.station_to_idx]
-        station_indices = [self.station_to_idx[s] for s in known_stations]
         
-        # Initialize predictions
-        predictions = pd.DataFrame(
-            0.0,
-            index=stations,
-            columns=times,
-        )
+        predictions = pd.DataFrame(0.0, index=stations, columns=times)
         
-        # Predict for each time period
         for t in times:
             hour = t.hour
             is_weekend = t.dayofweek in [5, 6]
             context = (hour, is_weekend)
             
-            # Get transition matrix and departure rates
             P = self.transition_matrices.get(context, self.global_transition_matrix)
-            dep_rates = self.departure_rates.get(context, self.global_departure_rates)
+            dep_rates = self.departure_rate_arrays.get(context, self.global_departure_rates)
             
             if P is None:
                 continue
             
-            # Build departure vector for all stations
-            dep_vector = np.zeros(len(self.stations))
-            for station, rate in dep_rates.items():
-                if station in self.station_to_idx:
-                    dep_vector[self.station_to_idx[station]] = rate
+            arrivals_vector = P.T @ dep_rates
             
-            # Compute arrivals: arrivals = P.T @ departures
-            # (each column of P.T tells us where arrivals come from)
-            arrivals_vector = P.T @ dep_vector
-            
-            # Net flow for each station
             for station in known_stations:
                 idx = self.station_to_idx[station]
-                departures = dep_vector[idx]
+                departures = dep_rates[idx]
                 arrivals = arrivals_vector[idx]
                 predictions.loc[station, t] = arrivals - departures
         
@@ -280,7 +446,6 @@ class MarkovModel(BaseModel):
         station_idx = self.station_to_idx[station]
         row = P.getrow(station_idx).toarray().flatten()
         
-        # Get top destinations
         top_indices = np.argsort(row)[-top_k:][::-1]
         
         results = []
@@ -293,62 +458,6 @@ class MarkovModel(BaseModel):
         
         return pd.DataFrame(results)
     
-    def predict_inventory(
-        self,
-        initial_inventory: pd.Series,
-        start_time: pd.Timestamp,
-        end_time: pd.Timestamp,
-        freq: str = "1h",
-    ) -> pd.DataFrame:
-        """Predict inventory using Markov model.
-        
-        TODO: Implement state-dependent bike simulation.
-        For now, uses a simple flow-based approach.
-        """
-        if not self.is_fitted:
-            raise ValueError("Model must be fitted before prediction")
-        
-        # Get stations from initial inventory
-        stations = initial_inventory.index.tolist()
-        
-        # Generate time periods
-        times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
-        
-        # Initialize predictions
-        predictions = pd.DataFrame(
-            index=stations,
-            columns=times,
-            dtype=float
-        )
-        
-        # Set initial state
-        predictions[times[0]] = initial_inventory
-        
-        # Get flow predictions
-        flow_pred = self.predict_flow(stations, start_time, end_time, freq)
-        
-        # Simulate forward
-        current_inventory = initial_inventory.copy()
-        
-        for i, t in enumerate(times[1:], 1):
-            # Apply predicted flow
-            new_inventory = current_inventory.copy()
-            
-            for station in stations:
-                net_flow = flow_pred.loc[station, t] if station in flow_pred.index and t in flow_pred.columns else 0
-                
-                # Update inventory
-                new_bikes = current_inventory.get(station, 0) + net_flow
-                
-                # Clamp to valid range [0, capacity]
-                capacity = self.station_capacities.get(station, 30)
-                new_inventory[station] = np.clip(new_bikes, 0, capacity)
-            
-            predictions[t] = new_inventory
-            current_inventory = new_inventory
-        
-        return predictions
-    
     def get_params(self) -> Dict[str, Any]:
         """Return model parameters."""
         return {
@@ -357,4 +466,5 @@ class MarkovModel(BaseModel):
             "n_transition_matrices": len(self.transition_matrices),
             "avg_sparsity": self._compute_avg_sparsity() if self.transition_matrices else None,
             "smoothing_alpha": self.smoothing_alpha,
+            "n_simulations": self.n_simulations,
         }

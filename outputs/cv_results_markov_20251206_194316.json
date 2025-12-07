@@ -1,0 +1,259 @@
+{
+  "model": "markov",
+  "config": {
+    "data": {
+      "trip_data_dir": "data",
+      "station_info_path": "data/stations/station_info.csv",
+      "inventory_dir": "data/inventory",
+      "output_dir": "outputs"
+    },
+    "time": {
+      "start_date": "2025-09-01",
+      "end_date": "2025-10-31"
+    },
+    "cross_validation": {
+      "train_weeks": 3,
+      "test_weeks": 1,
+      "min_folds": 3
+    },
+    "stations": {
+      "min_trips": 100,
+      "lat_min": 40.4,
+      "lat_max": 41.0,
+      "lng_min": -74.3,
+      "lng_max": -73.6
+    },
+    "thresholds": {
+      "empty": 0.1,
+      "full": 0.9
+    },
+    "model": {
+      "name": "markov",
+      "baseline": {
+        "description": "Predicts inventory using historical average flow"
+      },
+      "markov": {
+        "smoothing_alpha": 0.0,
+        "min_transitions": 10,
+        "n_simulations": 1
+      }
+    },
+    "evaluation": {
+      "freq": "1h"
+    },
+    "logging": {
+      "level": "INFO",
+      "save_predictions": true
+    }
+  },
+  "fold_results": [
+    {
+      "inventory_mae": 7.08376262558924,
+      "inventory_rmse": 12.507085700638486,
+      "inventory_mape": 0.6163182552823309,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.7579097776672846,
+      "empty_precision": 0.47981387030535866,
+      "empty_recall": 0.5396520896967891,
+      "empty_f1": 0.5079768583450209,
+      "empty_count": 53692,
+      "empty_predicted_count": 60388,
+      "full_precision": 0.6971474487746083,
+      "full_recall": 0.17773953659885686,
+      "full_f1": 0.2832609618335564,
+      "full_count": 48813,
+      "full_predicted_count": 12445,
+      "state_accuracy": 0.7281645500208375,
+      "station_mae_mean": 7.083762625589241,
+      "station_mae_std": 7.752811983724043,
+      "fold_id": 0,
+      "train_start": "2025-09-01",
+      "test_start": "2025-09-22"
+    },
+    {
+      "inventory_mae": 7.201044863775164,
+      "inventory_rmse": 13.12402130010364,
+      "inventory_mape": 0.6273704922751014,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.7426860963205348,
+      "empty_precision": 0.46164163967677563,
+      "empty_recall": 0.5207299297009059,
+      "empty_f1": 0.48940874526363254,
+      "empty_count": 54197,
+      "empty_predicted_count": 61134,
+      "full_precision": 0.7229187757962775,
+      "full_recall": 0.19523839569268303,
+      "full_f1": 0.3074451877856528,
+      "full_count": 47547,
+      "full_predicted_count": 12841,
+      "state_accuracy": 0.7263412734969621,
+      "station_mae_mean": 7.201044863775163,
+      "station_mae_std": 8.319384499758447,
+      "fold_id": 1,
+      "train_start": "2025-09-08",
+      "test_start": "2025-09-29"
+    },
+    {
+      "inventory_mae": 7.134543631621943,
+      "inventory_rmse": 12.191564039159774,
+      "inventory_mape": 0.611837188236804,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.7467493789978585,
+      "empty_precision": 0.43194803161931594,
+      "empty_recall": 0.552231338803282,
+      "empty_f1": 0.4847393614685345,
+      "empty_count": 49970,
+      "empty_predicted_count": 63885,
+      "full_precision": 0.7482977927422372,
+      "full_recall": 0.19093894383137958,
+      "full_f1": 0.3042453188932662,
+      "full_count": 52378,
+      "full_predicted_count": 13365,
+      "state_accuracy": 0.7161556008861398,
+      "station_mae_mean": 7.134543631621942,
+      "station_mae_std": 7.317461428116571,
+      "fold_id": 2,
+      "train_start": "2025-09-15",
+      "test_start": "2025-10-06"
+    },
+    {
+      "inventory_mae": 7.010050352900965,
+      "inventory_rmse": 12.85694594744516,
+      "inventory_mape": 0.6071892437548374,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.7165259848667203,
+      "empty_precision": 0.4567899361143568,
+      "empty_recall": 0.5637078651685393,
+      "empty_f1": 0.5046479853142105,
+      "empty_count": 53400,
+      "empty_predicted_count": 65899,
+      "full_precision": 0.6603875134553283,
+      "full_recall": 0.17787764569440417,
+      "full_f1": 0.28026496116948374,
+      "full_count": 41388,
+      "full_predicted_count": 11148,
+      "state_accuracy": 0.7364419512623105,
+      "station_mae_mean": 7.010050352900965,
+      "station_mae_std": 8.09581006609033,
+      "fold_id": 3,
+      "train_start": "2025-09-22",
+      "test_start": "2025-10-13"
+    },
+    {
+      "inventory_mae": 7.121881799497797,
+      "inventory_rmse": 15.766482888547205,
+      "inventory_mape": 0.6244758968248665,
+      "n_predictions": 364728,
+      "n_stations": 2171,
+      "n_time_periods": 168,
+      "correlation": 0.6924650046686976,
+      "empty_precision": 0.46180430879712747,
+      "empty_recall": 0.5431079987331527,
+      "empty_f1": 0.4991671652893899,
+      "empty_count": 56834,
+      "empty_predicted_count": 66840,
+      "full_precision": 0.6989441386156484,
+      "full_recall": 0.1920454263681222,
+      "full_f1": 0.30130324839525385,
+      "full_count": 40329,
+      "full_predicted_count": 11081,
+      "state_accuracy": 0.7329790967515518,
+      "station_mae_mean": 7.121881799497796,
+      "station_mae_std": 11.509301593521794,
+      "fold_id": 4,
+      "train_start": "2025-09-29",
+      "test_start": "2025-10-20"
+    }
+  ],
+  "summary": {
+    "inventory_mae": {
+      "mean": 7.110256654677022,
+      "std": 0.06278652187438556
+    },
+    "inventory_rmse": {
+      "mean": 13.289219975178852,
+      "std": 1.2780896335186105
+    },
+    "inventory_mape": {
+      "mean": 0.6174382152747879,
+      "std": 0.0075610359011574774
+    },
+    "n_predictions": {
+      "mean": 364728.0,
+      "std": 0.0
+    },
+    "n_stations": {
+      "mean": 2171.0,
+      "std": 0.0
+    },
+    "n_time_periods": {
+      "mean": 168.0,
+      "std": 0.0
+    },
+    "correlation": {
+      "mean": 0.7312672485042192,
+      "std": 0.023676274160351177
+    },
+    "empty_precision": {
+      "mean": 0.45839955730258686,
+      "std": 0.015381484477017317
+    },
+    "empty_recall": {
+      "mean": 0.5438858444205338,
+      "std": 0.014263841645950294
+    },
+    "empty_f1": {
+      "mean": 0.4971880231361577,
+      "std": 0.008848201467615849
+    },
+    "empty_count": {
+      "mean": 53618.6,
+      "std": 2192.6604479490206
+    },
+    "empty_predicted_count": {
+      "mean": 63629.2,
+      "std": 2540.0024724397417
+    },
+    "full_precision": {
+      "mean": 0.7055391338768199,
+      "std": 0.02926751793115947
+    },
+    "full_recall": {
+      "mean": 0.18676798963708915,
+      "std": 0.007450465163603793
+    },
+    "full_f1": {
+      "mean": 0.2953039356154426,
+      "std": 0.011265469922812679
+    },
+    "full_count": {
+      "mean": 46091.0,
+      "std": 4568.90450764732
+    },
+    "full_predicted_count": {
+      "mean": 12176.0,
+      "std": 914.780410809064
+    },
+    "state_accuracy": {
+      "mean": 0.7280164944835603,
+      "std": 0.006915559643676706
+    },
+    "station_mae_mean": {
+      "mean": 7.110256654677022,
+      "std": 0.06278652187438512
+    },
+    "station_mae_std": {
+      "mean": 8.598953914242236,
+      "std": 1.4939622192219868
+    }
+  },
+  "timestamp": "20251206_194316"
+}

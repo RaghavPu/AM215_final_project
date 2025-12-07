@@ -39,17 +39,22 @@ thresholds:
 
 # Model settings
 model:
-  # Which model to use: "baseline", "markov", etc.
-  name: "baseline"
+  # Which model to use:
+  #   - "persistence": Inventory stays constant (simplest baseline)
+  #   - "station_avg": Station-only average (no temporal patterns)
+  #   - "temporal_flow": Time-conditioned flow (hour + weekend)
+  #   - "markov": Markov chain with transition matrices
+  name: "temporal_flow"
   
-  # Baseline model parameters
-  baseline:
-    description: "Predicts inventory using historical average flow"
+  # Temporal flow model parameters
+  temporal_flow:
+    description: "Predicts inventory using time-conditioned historical flow"
   
   # Markov model parameters
   markov:
     smoothing_alpha: 0.0
     min_transitions: 10
+    n_simulations: 1  # Single random walk (no MC averaging)
 
 # Evaluation settings
 evaluation:
