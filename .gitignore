@@ -1,2 +1,53 @@
-data/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Data files (DO NOT COMMIT LARGE DATA!)
+data/raw/**
+data/parquet/trips/**
+data/processed/**
+*.csv
+*.csv.zip
+*.parquet
+
+# EXCEPTION: Allow small metadata files
+!data/parquet/stations/*.parquet
+!data/*catalog*.json
+!data/*metadata*.parquet
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Models (can be large)
+models/trained/**
+*.pkl
+*.h5
+*.pt
+*.pth
+*.model
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
