@@ -1,4 +1,4 @@
-"""Evaluation metrics for flow prediction models."""
+"""Evaluation metrics for inventory prediction models."""
 
 import pandas as pd
 import numpy as np
@@ -6,139 +6,163 @@ from typing import Dict, Tuple
 
 
 def compute_mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Compute Mean Absolute Error.
-    
-    Args:
-        y_true: True values
-        y_pred: Predicted values
-        
-    Returns:
-        MAE value
-    """
+    """Compute Mean Absolute Error."""
     return np.mean(np.abs(y_true - y_pred))
 
 
 def compute_rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Compute Root Mean Squared Error.
-    
-    Args:
-        y_true: True values
-        y_pred: Predicted values
-        
-    Returns:
-        RMSE value
-    """
+    """Compute Root Mean Squared Error."""
     return np.sqrt(np.mean((y_true - y_pred) ** 2))
 
 
 def compute_mape(y_true: np.ndarray, y_pred: np.ndarray, epsilon: float = 1.0) -> float:
-    """Compute Mean Absolute Percentage Error.
-    
-    Args:
-        y_true: True values
-        y_pred: Predicted values
-        epsilon: Small value to avoid division by zero
-        
-    Returns:
-        MAPE value (as fraction, not percentage)
-    """
+    """Compute Mean Absolute Percentage Error."""
     return np.mean(np.abs(y_true - y_pred) / (np.abs(y_true) + epsilon))
 
 
-def compute_direction_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Compute accuracy of predicting flow direction (positive/negative).
-    
-    This measures: Did we correctly predict if a station gains or loses bikes?
+def inventory_to_states(
+    inventory: pd.DataFrame,
+    capacities: Dict[str, float],
+    thresholds: Dict[str, float],
+) -> pd.DataFrame:
+    """Convert inventory counts to states (empty/normal/full).
     
     Args:
-        y_true: True net flow values
-        y_pred: Predicted net flow values
+        inventory: DataFrame with bike counts (index=stations, columns=times)
+        capacities: Dict mapping station -> capacity
+        thresholds: Dict with "empty" and "full" thresholds (as fraction of capacity)
         
     Returns:
-        Fraction of correct direction predictions
+        DataFrame with states ("empty", "normal", "full")
     """
-    # Get signs (positive = net inflow, negative = net outflow)
-    true_sign = np.sign(y_true)
-    pred_sign = np.sign(y_pred)
+    states = pd.DataFrame(index=inventory.index, columns=inventory.columns, dtype=str)
     
-    # Count matches (including both predicting 0)
-    correct = np.sum(true_sign == pred_sign)
-    total = len(y_true)
+    for station in inventory.index:
+        capacity = capacities.get(station, 30)
+        empty_thresh = capacity * thresholds.get("empty", 0.1)
+        full_thresh = capacity * thresholds.get("full", 0.9)
+        
+        for col in inventory.columns:
+            bikes = inventory.loc[station, col]
+            if bikes <= empty_thresh:
+                states.loc[station, col] = "empty"
+            elif bikes >= full_thresh:
+                states.loc[station, col] = "full"
+            else:
+                states.loc[station, col] = "normal"
     
-    return correct / total if total > 0 else 0.0
+    return states
 
 
-def compute_flow_metrics(
-    true_flow: pd.DataFrame,
-    pred_flow: pd.DataFrame,
+def compute_state_metrics(
+    true_states: pd.DataFrame,
+    pred_states: pd.DataFrame,
+    state: str,
 ) -> Dict[str, float]:
-    """Compute all flow prediction metrics.
+    """Compute precision, recall, F1 for a specific state.
     
     Args:
-        true_flow: DataFrame with actual net flow values
-                   (index=stations, columns=times)
-        pred_flow: DataFrame with predicted net flow values
+        true_states: DataFrame with actual states
+        pred_states: DataFrame with predicted states
+        state: Which state to evaluate ("empty" or "full")
+        
+    Returns:
+        Dictionary with precision, recall, f1, count
+    """
+    # Flatten and align
+    true_flat = true_states.values.flatten()
+    pred_flat = pred_states.values.flatten()
+    
+    # Binary classification metrics
+    true_positive = np.sum((true_flat == state) & (pred_flat == state))
+    false_positive = np.sum((true_flat != state) & (pred_flat == state))
+    false_negative = np.sum((true_flat == state) & (pred_flat != state))
+    true_negative = np.sum((true_flat != state) & (pred_flat != state))
+    
+    # Compute metrics
+    precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0.0
+    recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    
+    return {
+        f"{state}_precision": precision,
+        f"{state}_recall": recall,
+        f"{state}_f1": f1,
+        f"{state}_count": int(np.sum(true_flat == state)),
+        f"{state}_predicted_count": int(np.sum(pred_flat == state)),
+    }
+
+
+def compute_inventory_metrics(
+    true_inventory: pd.DataFrame,
+    pred_inventory: pd.DataFrame,
+    capacities: Dict[str, float],
+    thresholds: Dict[str, float],
+) -> Dict[str, float]:
+    """Compute all evaluation metrics for inventory prediction.
+    
+    Args:
+        true_inventory: DataFrame with actual bike counts
+        pred_inventory: DataFrame with predicted bike counts
+        capacities: Dict mapping station -> capacity
+        thresholds: Dict with "empty" and "full" thresholds
         
     Returns:
         Dictionary with all metrics
     """
     # Align dataframes
-    common_stations = true_flow.index.intersection(pred_flow.index)
-    common_times = true_flow.columns.intersection(pred_flow.columns)
+    common_stations = true_inventory.index.intersection(pred_inventory.index)
+    common_times = true_inventory.columns.intersection(pred_inventory.columns)
     
     if len(common_stations) == 0 or len(common_times) == 0:
         return {"error": "No overlap between true and predicted data"}
     
-    true_aligned = true_flow.loc[common_stations, common_times]
-    pred_aligned = pred_flow.loc[common_stations, common_times]
+    true_inv = true_inventory.loc[common_stations, common_times]
+    pred_inv = pred_inventory.loc[common_stations, common_times]
     
-    # Flatten for metric computation
-    true_flat = true_aligned.values.flatten()
-    pred_flat = pred_aligned.values.flatten()
+    # Flatten for basic metrics
+    true_flat = true_inv.values.flatten()
+    pred_flat = pred_inv.values.flatten()
     
     metrics = {
-        "mae": compute_mae(true_flat, pred_flat),
-        "rmse": compute_rmse(true_flat, pred_flat),
-        "mape": compute_mape(true_flat, pred_flat),
-        "direction_accuracy": compute_direction_accuracy(true_flat, pred_flat),
+        "inventory_mae": compute_mae(true_flat, pred_flat),
+        "inventory_rmse": compute_rmse(true_flat, pred_flat),
+        "inventory_mape": compute_mape(true_flat, pred_flat),
         "n_predictions": len(true_flat),
         "n_stations": len(common_stations),
         "n_time_periods": len(common_times),
     }
     
-    # Correlation between predicted and actual
-    if len(true_flat) > 1:
+    # Correlation
+    if len(true_flat) > 1 and np.std(true_flat) > 0 and np.std(pred_flat) > 0:
         correlation = np.corrcoef(true_flat, pred_flat)[0, 1]
         metrics["correlation"] = correlation if not np.isnan(correlation) else 0.0
     else:
         metrics["correlation"] = 0.0
     
-    # Per-station metrics (average across stations)
+    # Convert to states
+    true_states = inventory_to_states(true_inv, capacities, thresholds)
+    pred_states = inventory_to_states(pred_inv, capacities, thresholds)
+    
+    # State-based metrics
+    for state in ["empty", "full"]:
+        state_metrics = compute_state_metrics(true_states, pred_states, state)
+        metrics.update(state_metrics)
+    
+    # Overall state accuracy
+    correct = np.sum(true_states.values == pred_states.values)
+    total = true_states.size
+    metrics["state_accuracy"] = correct / total if total > 0 else 0.0
+    
+    # Per-station metrics
     station_maes = []
-    station_rmses = []
     for station in common_stations:
-        true_s = true_aligned.loc[station].values
-        pred_s = pred_aligned.loc[station].values
+        true_s = true_inv.loc[station].values
+        pred_s = pred_inv.loc[station].values
         station_maes.append(compute_mae(true_s, pred_s))
-        station_rmses.append(compute_rmse(true_s, pred_s))
     
     metrics["station_mae_mean"] = np.mean(station_maes)
     metrics["station_mae_std"] = np.std(station_maes)
-    metrics["station_rmse_mean"] = np.mean(station_rmses)
-    
-    # Metrics for high-flow periods (when |flow| > threshold)
-    high_flow_threshold = np.percentile(np.abs(true_flat), 75)
-    high_flow_mask = np.abs(true_flat) > high_flow_threshold
-    
-    if np.sum(high_flow_mask) > 0:
-        metrics["high_flow_mae"] = compute_mae(
-            true_flat[high_flow_mask], 
-            pred_flat[high_flow_mask]
-        )
-        metrics["high_flow_direction_acc"] = compute_direction_accuracy(
-            true_flat[high_flow_mask],
-            pred_flat[high_flow_mask]
-        )
     
     return metrics
 
@@ -168,12 +192,10 @@ def summarize_fold_results(fold_results: list) -> Dict[str, Tuple[float, float]]
         
         values = [r[metric] for r in fold_results if metric in r]
         if values:
-            # Only compute stats for numeric values
             try:
                 numeric_values = [float(v) for v in values]
                 summary[metric] = (np.mean(numeric_values), np.std(numeric_values))
             except (ValueError, TypeError):
-                # Skip non-numeric metrics
                 continue
     
     return summary

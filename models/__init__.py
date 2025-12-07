@@ -2,10 +2,12 @@
 
 from .base import BaseModel
 from .baseline import BaselineModel
+from .markov import MarkovModel
 
 __all__ = [
     "BaseModel",
     "BaselineModel",
+    "MarkovModel",
 ]
 
 
@@ -21,8 +23,7 @@ def get_model(name: str, config: dict) -> BaseModel:
     """
     models = {
         "baseline": BaselineModel,
-        # Add more models here as you implement them
-        # "markov": MarkovModel,
+        "markov": MarkovModel,
     }
     
     if name not in models:
