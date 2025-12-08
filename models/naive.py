@@ -165,3 +165,4 @@ class StationAverageModel(BaseModel):
             "global_avg_flow": self.global_avg_flow,
         }
 
+
