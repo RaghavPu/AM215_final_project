@@ -1,0 +1,22 @@
+{
+  "2025-09-01 00:00:00": {
+    "Station A": "empty",
+    "Station B": "empty"
+  },
+  "2025-09-01 01:00:00": {
+    "Station A": "normal",
+    "Station B": "normal"
+  },
+  "2025-09-01 02:00:00": {
+    "Station A": "normal",
+    "Station B": "normal"
+  },
+  "2025-09-01 03:00:00": {
+    "Station A": "full",
+    "Station B": "normal"
+  },
+  "2025-09-01 04:00:00": {
+    "Station A": "full",
+    "Station B": "full"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "fetch_timestamp": "2025-12-06T16:16:53.087982",
+  "source_url": "https://gbfs.lyft.com/gbfs/1.1/bkn/en/station_information.json",
+  "total_stations": 2318,
+  "total_capacity": 71491,
+  "avg_capacity": 30.84167385677308,
+  "capacity_range": [
+    0,
+    123
+  ]
+}

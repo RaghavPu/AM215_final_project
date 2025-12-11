@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate lookback window plots from existing results."""
 
+import json
 import sys
 from pathlib import Path
-import json
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -16,7 +16,7 @@ from optimize_lookback_window import create_plots
 output_dir = project_root / "outputs"
 results_file = output_dir / "lookback_optimization_20251211_112211.json"
 
-with open(results_file, 'r') as f:
+with open(results_file) as f:
     data = json.load(f)
     results = data["configurations"]
 

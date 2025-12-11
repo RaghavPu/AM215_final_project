@@ -1,15 +1,16 @@
 """DuckDB utilities for efficient data querying and processing."""
 
+from pathlib import Path
+from typing import Any
+
 import duckdb
 import pandas as pd
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 
 
 class DuckDBConnection:
     """Context manager for DuckDB connections."""
 
-    def __init__(self, database: Optional[str] = None):
+    def __init__(self, database: str | None = None):
         """Initialize connection.
 
         Args:
@@ -31,9 +32,9 @@ class DuckDBConnection:
 
 def query_parquet(
     parquet_path: Path,
-    columns: Optional[List[str]] = None,
-    filters: Optional[Dict[str, Any]] = None,
-    limit: Optional[int] = None,
+    columns: list[str] | None = None,
+    filters: dict[str, Any] | None = None,
+    limit: int | None = None,
 ) -> pd.DataFrame:
     """Query Parquet files with DuckDB.
 
@@ -83,9 +84,9 @@ def query_parquet(
 
 def aggregate_trips(
     parquet_path: Path,
-    group_by: List[str],
-    aggregations: Dict[str, str],
-    filters: Optional[Dict[str, Any]] = None,
+    group_by: list[str],
+    aggregations: dict[str, str],
+    filters: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Aggregate trip data using DuckDB.
 
@@ -135,9 +136,9 @@ def aggregate_trips(
 
 def get_trip_stats(
     parquet_path: Path,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-) -> Dict[str, Any]:
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> dict[str, Any]:
     """Get summary statistics for trip data.
 
     Args:
@@ -187,8 +188,8 @@ def get_trip_stats(
 
 def count_trips_by_station(
     parquet_path: Path,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> pd.DataFrame:
     """Count trips by station (both starts and ends).
 
@@ -245,7 +246,7 @@ def count_trips_by_station(
 def export_to_parquet(
     df: pd.DataFrame,
     output_path: Path,
-    partition_cols: Optional[List[str]] = None,
+    partition_cols: list[str] | None = None,
     compression: str = "zstd",
 ) -> None:
     """Export DataFrame to Parquet using DuckDB.
@@ -283,8 +284,8 @@ def export_to_parquet(
 def create_summary_table(
     parquet_path: Path,
     output_path: Path,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> None:
     """Create a summary table for faster querying.
 
@@ -336,4 +337,4 @@ def create_summary_table(
 
         print(f"Creating summary table at {output_path}...")
         con.execute(query)
-        print(f"✓ Summary table created")
+        print("✓ Summary table created")

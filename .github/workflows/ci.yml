@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: ["*"]  # Trigger on all branches
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run Ruff formatter check
+        run: |
+          ruff format --check .
+      
+      - name: Run Ruff linter
+        run: |
+          ruff check .
+      
+      - name: Run type checker (mypy)
+        run: |
+          mypy models/ evaluation/ utils/ --ignore-missing-imports || echo "::warning::mypy found type issues (non-blocking)"
+        continue-on-error: true
+      
+      - name: Run tests with pytest
+        run: |
+          pytest tests/ -v --tb=short -ra
+      
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ --cov=models --cov=evaluation --cov=utils --cov-report=term-missing --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11'
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+  regression-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run regression tests
+        run: |
+          pytest tests/test_regression.py -v -m regression --tb=long
+

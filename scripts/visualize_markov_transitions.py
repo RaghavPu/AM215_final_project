@@ -5,17 +5,18 @@ Visualize and explore Markov model transition matrices.
 
 import sys
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from utils import load_trip_data, load_station_info, prepare_data, load_config
 from models import MarkovModel
+from utils import load_config, load_station_info, load_trip_data, prepare_data
 
 
 def main():
@@ -71,7 +72,7 @@ def main():
         n_nonzero = P.nnz
         density = n_nonzero / (n_stations * n_stations)
 
-        print(f"\nMatrix Statistics:")
+        print("\nMatrix Statistics:")
         print(f"  Size: {n_stations} x {n_stations}")
         print(f"  Non-zero entries: {n_nonzero:,}")
         print(f"  Density: {density:.4%}")
@@ -81,7 +82,7 @@ def main():
         avg_dep_rate = dep_rates.mean()
         max_dep_rate = dep_rates.max()
 
-        print(f"\nDeparture Rates:")
+        print("\nDeparture Rates:")
         print(f"  Average: {avg_dep_rate:.2f} trips/hour/station")
         print(f"  Maximum: {max_dep_rate:.2f} trips/hour")
         print(f"  Total expected departures: {dep_rates.sum():.0f} trips/hour")
@@ -89,7 +90,7 @@ def main():
         # Find most active stations
         top_departure_indices = np.argsort(dep_rates)[-5:][::-1]
 
-        print(f"\nTop 5 Busiest Stations (by departures):")
+        print("\nTop 5 Busiest Stations (by departures):")
         for i, idx in enumerate(top_departure_indices, 1):
             station_name = model.idx_to_station[idx]
             rate = dep_rates[idx]
@@ -169,7 +170,9 @@ def main():
 
         # Get station names
         station_names = [model.idx_to_station[i] for i in top_7_indices]
-        station_labels = [name[:40] if len(name) <= 40 else name[:37] + "..." for name in station_names]
+        station_labels = [
+            name[:40] if len(name) <= 40 else name[:37] + "..." for name in station_names
+        ]
 
         # Create heatmap
         plt.figure(figsize=(12, 10))
@@ -177,25 +180,29 @@ def main():
             submatrix,
             xticklabels=station_labels,
             yticklabels=station_labels,
-            cmap='YlOrRd',
-            cbar_kws={'label': 'Transition Probability'},
+            cmap="YlOrRd",
+            cbar_kws={"label": "Transition Probability"},
             vmin=0,
             vmax=0.15,  # Cap for better visualization
             annot=True,  # Show values since it's only 7x7
-            fmt='.3f',
+            fmt=".3f",
             linewidths=0.5,
-            linecolor='gray',
+            linecolor="gray",
         )
-        plt.title('Morning Rush Hour Transition Probabilities\nTop 7 Busiest Stations (8 AM Weekday)',
-                  fontsize=15, pad=20, fontweight='bold')
-        plt.xlabel('Destination Station', fontsize=12)
-        plt.ylabel('Origin Station', fontsize=12)
-        plt.xticks(rotation=45, ha='right', fontsize=10)
+        plt.title(
+            "Morning Rush Hour Transition Probabilities\nTop 7 Busiest Stations (8 AM Weekday)",
+            fontsize=15,
+            pad=20,
+            fontweight="bold",
+        )
+        plt.xlabel("Destination Station", fontsize=12)
+        plt.ylabel("Origin Station", fontsize=12)
+        plt.xticks(rotation=45, ha="right", fontsize=10)
         plt.yticks(rotation=0, fontsize=10)
         plt.tight_layout()
 
         output_file = project_root / "outputs" / "markov_transition_morning_top7.png"
-        plt.savefig(output_file, dpi=200, bbox_inches='tight')
+        plt.savefig(output_file, dpi=200, bbox_inches="tight")
         print(f"\nSaved morning heatmap to: {output_file}")
 
         # Analyze top routes
@@ -245,7 +252,9 @@ def main():
 
         # Get station names
         station_names = [model.idx_to_station[i] for i in top_7_indices]
-        station_labels = [name[:40] if len(name) <= 40 else name[:37] + "..." for name in station_names]
+        station_labels = [
+            name[:40] if len(name) <= 40 else name[:37] + "..." for name in station_names
+        ]
 
         # Create heatmap
         plt.figure(figsize=(12, 10))
@@ -253,25 +262,29 @@ def main():
             submatrix,
             xticklabels=station_labels,
             yticklabels=station_labels,
-            cmap='YlOrRd',
-            cbar_kws={'label': 'Transition Probability'},
+            cmap="YlOrRd",
+            cbar_kws={"label": "Transition Probability"},
             vmin=0,
             vmax=0.10,  # Cap for better visualization
             annot=True,  # Show values since it's only 7x7
-            fmt='.3f',
+            fmt=".3f",
             linewidths=0.5,
-            linecolor='gray',
+            linecolor="gray",
         )
-        plt.title('Evening Rush Hour Transition Probabilities\nTop 7 Busiest Stations (5 PM Weekday)',
-                  fontsize=15, pad=20, fontweight='bold')
-        plt.xlabel('Destination Station', fontsize=12)
-        plt.ylabel('Origin Station', fontsize=12)
-        plt.xticks(rotation=45, ha='right', fontsize=10)
+        plt.title(
+            "Evening Rush Hour Transition Probabilities\nTop 7 Busiest Stations (5 PM Weekday)",
+            fontsize=15,
+            pad=20,
+            fontweight="bold",
+        )
+        plt.xlabel("Destination Station", fontsize=12)
+        plt.ylabel("Origin Station", fontsize=12)
+        plt.xticks(rotation=45, ha="right", fontsize=10)
         plt.yticks(rotation=0, fontsize=10)
         plt.tight_layout()
 
         output_file = project_root / "outputs" / "markov_transition_evening_top7.png"
-        plt.savefig(output_file, dpi=200, bbox_inches='tight')
+        plt.savefig(output_file, dpi=200, bbox_inches="tight")
         print(f"\nSaved evening heatmap to: {output_file}")
 
         # Analyze top routes
@@ -310,11 +323,13 @@ def main():
             if dep_rates is not None:
                 total_activity = dep_rates.sum()
                 day_type = "Weekend" if is_weekend else "Weekday"
-                hourly_activity.append({
-                    'hour': hour,
-                    'day_type': day_type,
-                    'total_trips_per_hour': total_activity,
-                })
+                hourly_activity.append(
+                    {
+                        "hour": hour,
+                        "day_type": day_type,
+                        "total_trips_per_hour": total_activity,
+                    }
+                )
 
     df_activity = pd.DataFrame(hourly_activity)
 
@@ -322,28 +337,39 @@ def main():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
     # Weekday pattern
-    weekday_data = df_activity[df_activity['day_type'] == 'Weekday']
-    ax1.plot(weekday_data['hour'], weekday_data['total_trips_per_hour'],
-             marker='o', linewidth=2, markersize=6)
-    ax1.set_xlabel('Hour of Day', fontsize=12)
-    ax1.set_ylabel('Total Expected Trips/Hour', fontsize=12)
-    ax1.set_title('Weekday Activity Pattern', fontsize=14)
+    weekday_data = df_activity[df_activity["day_type"] == "Weekday"]
+    ax1.plot(
+        weekday_data["hour"],
+        weekday_data["total_trips_per_hour"],
+        marker="o",
+        linewidth=2,
+        markersize=6,
+    )
+    ax1.set_xlabel("Hour of Day", fontsize=12)
+    ax1.set_ylabel("Total Expected Trips/Hour", fontsize=12)
+    ax1.set_title("Weekday Activity Pattern", fontsize=14)
     ax1.grid(True, alpha=0.3)
     ax1.set_xticks(range(0, 24, 2))
 
     # Weekend pattern
-    weekend_data = df_activity[df_activity['day_type'] == 'Weekend']
-    ax2.plot(weekend_data['hour'], weekend_data['total_trips_per_hour'],
-             marker='o', linewidth=2, color='orange', markersize=6)
-    ax2.set_xlabel('Hour of Day', fontsize=12)
-    ax2.set_ylabel('Total Expected Trips/Hour', fontsize=12)
-    ax2.set_title('Weekend Activity Pattern', fontsize=14)
+    weekend_data = df_activity[df_activity["day_type"] == "Weekend"]
+    ax2.plot(
+        weekend_data["hour"],
+        weekend_data["total_trips_per_hour"],
+        marker="o",
+        linewidth=2,
+        color="orange",
+        markersize=6,
+    )
+    ax2.set_xlabel("Hour of Day", fontsize=12)
+    ax2.set_ylabel("Total Expected Trips/Hour", fontsize=12)
+    ax2.set_title("Weekend Activity Pattern", fontsize=14)
     ax2.grid(True, alpha=0.3)
     ax2.set_xticks(range(0, 24, 2))
 
     plt.tight_layout()
     output_file = project_root / "outputs" / "markov_hourly_activity.png"
-    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.savefig(output_file, dpi=150, bbox_inches="tight")
     print(f"\nSaved activity pattern plot to: {output_file}")
 
     print("\n" + "=" * 70)

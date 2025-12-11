@@ -5,9 +5,10 @@ This script generates URLs for all 2024 and 2025 trip data files
 and tests DuckDB's ability to query them remotely.
 """
 
-import duckdb
-from pathlib import Path
 import json
+from pathlib import Path
+
+import duckdb
 
 
 def generate_s3_urls(years=[2024, 2025]):
@@ -36,13 +37,15 @@ def generate_s3_urls(years=[2024, 2025]):
             filename = f"{year}{month:02d}-citibike-tripdata.csv.zip"
             url = f"{base_url}/{filename}"
 
-            catalog.append({
-                'year': year,
-                'month': month,
-                'filename': filename,
-                'url': url,
-                'csv_name': filename.replace('.zip', '.csv')
-            })
+            catalog.append(
+                {
+                    "year": year,
+                    "month": month,
+                    "filename": filename,
+                    "url": url,
+                    "csv_name": filename.replace(".zip", ".csv"),
+                }
+            )
 
     return catalog
 
@@ -106,25 +109,25 @@ def verify_catalog(catalog):
     print(f"  File: {first_file['filename']}")
     print(f"  URL: {first_file['url']}")
 
-    result = test_remote_access(first_file['url'], first_file['csv_name'], limit=5)
+    result = test_remote_access(first_file["url"], first_file["csv_name"], limit=5)
 
     if isinstance(result, tuple):  # Error case
         df, error = result
         print(f"  ✗ Failed: {error}\n")
-        first_file['accessible'] = False
-        first_file['error'] = error
+        first_file["accessible"] = False
+        first_file["error"] = error
     else:
         df = result
         print(f"  ✓ Success! Retrieved {len(df)} rows")
         print(f"  Columns: {df.columns.tolist()}")
-        print(f"\n  Sample data:")
+        print("\n  Sample data:")
         print(df.head().to_string(index=False))
-        first_file['accessible'] = True
-        first_file['row_count_sample'] = len(df)
+        first_file["accessible"] = True
+        first_file["row_count_sample"] = len(df)
 
     # Mark others as assumed accessible (same pattern)
     for item in catalog[1:]:
-        item['accessible'] = first_file['accessible']
+        item["accessible"] = first_file["accessible"]
 
     return catalog
 
@@ -133,7 +136,7 @@ def save_catalog(catalog, output_path):
     """Save catalog to JSON file."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(catalog, f, indent=2)
 
     print(f"\n✓ Saved catalog to {output_path}")
@@ -151,7 +154,7 @@ def create_duckdb_view_script(catalog):
     Returns:
         SQL script as string
     """
-    accessible_files = [item for item in catalog if item.get('accessible', False)]
+    accessible_files = [item for item in catalog if item.get("accessible", False)]
 
     if not accessible_files:
         return "-- No accessible files found"
@@ -159,9 +162,9 @@ def create_duckdb_view_script(catalog):
     # Create UNION ALL query across all files
     sql_parts = []
     for item in accessible_files:
-        year = item['year']
-        month = item['month']
-        url = item['url']
+        year = item["year"]
+        month = item["month"]
+        url = item["url"]
 
         sql_parts.append(f"""
     -- {year}-{month:02d}
@@ -223,19 +226,19 @@ def main():
     catalog = verify_catalog(catalog)
 
     # Save catalog
-    catalog_path = project_root / 'data' / 'trip_data_catalog.json'
+    catalog_path = project_root / "data" / "trip_data_catalog.json"
     save_catalog(catalog, catalog_path)
 
     # Generate SQL script
     sql_script = create_duckdb_view_script(catalog)
-    sql_path = project_root / 'src' / 'create_unified_view.sql'
+    sql_path = project_root / "src" / "create_unified_view.sql"
     sql_path.write_text(sql_script)
     print(f"✓ Saved SQL script to {sql_path}")
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SETUP COMPLETE!")
-    print("="*60)
+    print("=" * 60)
     print("\nYou can now query CitiBike data remotely without downloading!")
     print("\nExample usage:")
     print("""
