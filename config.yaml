@@ -59,6 +59,7 @@ model:
     smoothing_alpha: 0.0
     min_transitions: 10
     n_simulations: 1  # Single random walk (no MC averaging)
+    random_seed: 42   # Set to null for non-reproducible runs
 
 # Evaluation settings
 evaluation:

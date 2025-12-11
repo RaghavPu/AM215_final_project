@@ -3,6 +3,28 @@ name = "citibike-inventory-prediction"
 version = "0.1.0"
 description = "CitiBike NYC bike station inventory prediction models"
 requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "folium>=0.14.0",
+    "plotly>=5.15.0",
+    "tqdm>=4.65.0",
+    "requests>=2.31.0",
+    "pyyaml>=6.0",
+    "duckdb>=0.9.0",
+    "scipy>=1.11.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "jupyter>=1.0.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

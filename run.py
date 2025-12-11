@@ -6,11 +6,13 @@ Usage:
     python run.py                    # Run with default config
     python run.py --config custom.yaml  # Run with custom config
     python run.py --model baseline   # Override model choice
+    python run.py --seed 12345       # Set random seed for reproducibility
     python run.py --compare          # Compare against cached results
 """
 
 import argparse
 import json
+import logging
 from datetime import datetime
 from glob import glob
 from pathlib import Path
@@ -18,6 +20,12 @@ from pathlib import Path
 from evaluation import run_cross_validation
 from models import get_model
 from utils import load_config, load_station_info, load_trip_data, prepare_data
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 
 def parse_args():
@@ -51,6 +59,12 @@ def parse_args():
         type=str,
         default=None,
         help="Compare against cached results for specified model (e.g., --compare baseline)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed for reproducibility (overrides config)",
     )
     return parser.parse_args()
 
@@ -153,6 +167,15 @@ def main():
         config["model"]["name"] = args.model
     if args.output_dir:
         config["data"]["output_dir"] = args.output_dir
+    if args.seed is not None:
+        # Override random seed in model configs
+        if "markov" not in config.get("model", {}):
+            config["model"]["markov"] = {}
+        config["model"]["markov"]["random_seed"] = args.seed
+
+    # Log the random seed being used
+    random_seed = config.get("model", {}).get("markov", {}).get("random_seed", None)
+    logging.info(f"Random seed for this run: {random_seed}")
 
     # Create output directory
     output_dir = Path(config["data"]["output_dir"])
@@ -206,13 +229,19 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_file = output_dir / f"cv_results_{model_name}_{timestamp}.json"
 
+        # Get the random seed used (for logging)
+        random_seed = config.get("model", {}).get("markov", {}).get("random_seed", None)
+
         results = {
             "model": model_name,
             "config": config,
             "fold_results": fold_results,
             "summary": {k: {"mean": v[0], "std": v[1]} for k, v in summary.items()},
             "timestamp": timestamp,
+            "random_seed": random_seed,
         }
+
+        logging.info(f"Run completed with random_seed={random_seed}")
 
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2, default=str)

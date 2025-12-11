@@ -31,6 +31,7 @@ class MarkovModel(BaseModel):
         self.smoothing_alpha = model_config.get("smoothing_alpha", 0.0)
         self.min_transitions = model_config.get("min_transitions", 1)
         self.n_simulations = model_config.get("n_simulations", 50)
+        self.random_seed = model_config.get("random_seed", None)  # None = use system entropy
 
         # Learned parameters
         self.stations = []
@@ -328,7 +329,7 @@ class MarkovModel(BaseModel):
 
         # Run simulations
         all_trajectories = np.zeros((self.n_simulations, n_stations, n_times))
-        rng = np.random.default_rng(seed=42)  # Reproducible
+        rng = np.random.default_rng(seed=self.random_seed)
 
         # Use deterministic mode for single simulation
         deterministic = self.n_simulations == 1
@@ -369,7 +370,7 @@ class MarkovModel(BaseModel):
         init_array = np.array([initial_inventory.get(s, 0) for s in self.stations], dtype=float)
 
         all_trajectories = np.zeros((self.n_simulations, n_stations, n_times))
-        rng = np.random.default_rng(seed=42)
+        rng = np.random.default_rng(seed=self.random_seed)
 
         for sim in range(self.n_simulations):
             all_trajectories[sim] = self._simulate_one_walk(init_array, times, rng)
@@ -470,4 +471,5 @@ class MarkovModel(BaseModel):
             "avg_sparsity": self._compute_avg_sparsity() if self.transition_matrices else None,
             "smoothing_alpha": self.smoothing_alpha,
             "n_simulations": self.n_simulations,
+            "random_seed": self.random_seed,
         }
