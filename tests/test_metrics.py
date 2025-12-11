@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from evaluation import (
+from citibike.evaluation import (
     compute_inventory_metrics,
     compute_mae,
     compute_mape,

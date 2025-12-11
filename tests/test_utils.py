@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evaluation import RollingWindowCV, compute_initial_inventory_for_fold, track_inventory
-from utils.helpers import get_project_root, load_config
+from citibike.evaluation import RollingWindowCV, compute_initial_inventory_for_fold, track_inventory
+from citibike.utils.helpers import get_project_root, load_config
 
 
 class TestLoadConfig:

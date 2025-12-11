@@ -11,12 +11,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# Add src to path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
-from models import MarkovModel
-from utils import load_config, load_station_info, load_trip_data, prepare_data
+from citibike.models import MarkovModel
+from citibike.utils import load_config, load_station_info, load_trip_data, prepare_data
 
 
 def main():

@@ -10,16 +10,16 @@ Golden files are used by test_regression.py to detect unintended changes.
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add src directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import json
 
 import numpy as np
 import pandas as pd
 
-from evaluation import compute_inventory_metrics, inventory_to_states, track_inventory
-from models import MarkovModel, TemporalFlowModel
+from citibike.evaluation import compute_inventory_metrics, inventory_to_states, track_inventory
+from citibike.models import MarkovModel, TemporalFlowModel
 
 GOLDEN_DIR = Path(__file__).parent / "golden_files"
 
