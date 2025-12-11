@@ -6,6 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "citibike"
 version = "0.1.0"
 description = "CitiBike NYC bike station inventory prediction models"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "AM215 Final Project Team"},
+]
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.0.0",
