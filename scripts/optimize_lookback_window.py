@@ -76,10 +76,6 @@ def main():
         (1, 1, 7, "1w train, 1w test"),
         (2, 1, 7, "2w train, 1w test"),
         (3, 1, 7, "3w train, 1w test"),
-        (4, 1, 7, "4w train, 1w test"),
-        (2, 2, 7, "2w train, 2w test"),
-        (3, 2, 7, "3w train, 2w test"),
-        (4, 2, 7, "4w train, 2w test"),
     ]
 
     print(f"\nTesting {len(configurations)} configurations:")
@@ -190,7 +186,7 @@ def create_plots(results, output_dir):
     bars[best_idx].set_linewidth(3)
 
     # Add values on bars
-    for i, (bar, mean, std) in enumerate(zip(bars, means, stds)):
+    for _i, (bar, mean, std) in enumerate(zip(bars, means, stds)):
         height = bar.get_height()
         ax.text(
             bar.get_x() + bar.get_width() / 2.0,

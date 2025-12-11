@@ -14,7 +14,7 @@ from optimize_lookback_window import create_plots
 
 # Load existing results
 output_dir = project_root / "outputs"
-results_file = output_dir / "lookback_optimization_20251211_112211.json"
+results_file = output_dir / "lookback_optimization_20251211_114836.json"
 
 with open(results_file) as f:
     data = json.load(f)
