@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["*"]  # Trigger on all branches
+    branches: [main, master]  # Trigger on all branches
   pull_request:
     branches: [main, master]
 
