@@ -77,10 +77,6 @@ def main():
         (1, 1, 7, "1w train, 1w test"),
         (2, 1, 7, "2w train, 1w test"),
         (3, 1, 7, "3w train, 1w test"),
-        (4, 1, 7, "4w train, 1w test"),
-        (2, 2, 7, "2w train, 2w test"),
-        (3, 2, 7, "3w train, 2w test"),
-        (4, 2, 7, "4w train, 2w test"),
     ]
 
     print(f"\nTesting {len(configurations)} configurations:")
@@ -173,12 +169,6 @@ def create_plots(results, output_dir):
     bars[best_idx].set_edgecolor('red')
     bars[best_idx].set_linewidth(3)
 
-    # Add values on bars
-    for i, (bar, mean, std) in enumerate(zip(bars, means, stds)):
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2., height + std,
-                f'{mean:.1f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
-
     # 2. RMSE comparison
     ax = axes[0, 1]
     means, stds = metrics_data["inventory_rmse"]
@@ -206,7 +196,7 @@ def create_plots(results, output_dir):
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
     ax.grid(axis='y', alpha=0.3)
-    ax.set_ylim([0, 100])
+    ax.set_ylim([0, 120])
 
     best_idx = np.argmax(means)
     bars[best_idx].set_edgecolor('red')
