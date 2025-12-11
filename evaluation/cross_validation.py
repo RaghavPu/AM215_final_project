@@ -21,14 +21,17 @@ class CVFold:
 
 class RollingWindowCV:
     """Rolling window cross-validation splitter."""
-    
+
     def __init__(
         self,
         train_weeks: int = 3,
         test_weeks: int = 1,
+        increment_days: int = None,
     ):
         self.train_weeks = train_weeks
         self.test_weeks = test_weeks
+        # If increment_days not specified, default to test_weeks worth of days
+        self.increment_days = increment_days if increment_days is not None else (test_weeks * 7)
     
     def split(
         self,
@@ -37,21 +40,22 @@ class RollingWindowCV:
         """Generate train/test splits."""
         min_date = trips["started_at"].min().normalize()
         max_date = trips["started_at"].max().normalize()
-        
+
         train_delta = pd.Timedelta(weeks=self.train_weeks)
         test_delta = pd.Timedelta(weeks=self.test_weeks)
-        
+        increment_delta = pd.Timedelta(days=self.increment_days)
+
         fold_id = 0
         train_start = min_date
-        
+
         while True:
             train_end = train_start + train_delta
             test_start = train_end
             test_end = test_start + test_delta
-            
+
             if test_end > max_date:
                 break
-            
+
             yield CVFold(
                 fold_id=fold_id,
                 train_start=train_start,
@@ -59,9 +63,9 @@ class RollingWindowCV:
                 test_start=test_start,
                 test_end=test_end,
             )
-            
+
             fold_id += 1
-            train_start = train_start + test_delta
+            train_start = train_start + increment_delta
     
     def get_n_splits(self, trips: pd.DataFrame) -> int:
         return sum(1 for _ in self.split(trips))
@@ -209,6 +213,7 @@ def run_cross_validation(
     cv = RollingWindowCV(
         train_weeks=cv_config.get("train_weeks", 3),
         test_weeks=cv_config.get("test_weeks", 1),
+        increment_days=cv_config.get("increment_days", None),
     )
     
     stations = station_stats.index.tolist()
