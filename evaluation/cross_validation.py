@@ -1,4 +1,4 @@
-"""Rolling window cross-validation for time series flow prediction."""
+"""Rolling window cross-validation for inventory prediction."""
 
 import pandas as pd
 import numpy as np
@@ -6,7 +6,7 @@ from typing import List, Tuple, Generator, Dict, Any
 from dataclasses import dataclass
 from tqdm import tqdm
 
-from .metrics import compute_flow_metrics, summarize_fold_results
+from .metrics import compute_inventory_metrics, summarize_fold_results
 
 
 @dataclass
@@ -20,59 +20,42 @@ class CVFold:
 
 
 class RollingWindowCV:
-    """Rolling window cross-validation splitter.
-    
-    Creates train/test splits where:
-    - Train: N weeks of data
-    - Test: M weeks of data immediately following train
-    - Rolls forward by M weeks for each fold
-    """
-    
+    """Rolling window cross-validation splitter."""
+
     def __init__(
         self,
         train_weeks: int = 3,
         test_weeks: int = 1,
+        increment_days: int = None,
     ):
-        """Initialize the splitter.
-        
-        Args:
-            train_weeks: Number of weeks in training window
-            test_weeks: Number of weeks in test window
-        """
         self.train_weeks = train_weeks
         self.test_weeks = test_weeks
+        # If increment_days not specified, default to test_weeks worth of days
+        self.increment_days = increment_days if increment_days is not None else (test_weeks * 7)
     
     def split(
         self,
         trips: pd.DataFrame,
     ) -> Generator[CVFold, None, None]:
-        """Generate train/test splits.
-        
-        Args:
-            trips: Trip data with 'started_at' column
-            
-        Yields:
-            CVFold objects with train/test date ranges
-        """
-        # Get date range
+        """Generate train/test splits."""
         min_date = trips["started_at"].min().normalize()
         max_date = trips["started_at"].max().normalize()
-        
+
         train_delta = pd.Timedelta(weeks=self.train_weeks)
         test_delta = pd.Timedelta(weeks=self.test_weeks)
-        
+        increment_delta = pd.Timedelta(days=self.increment_days)
+
         fold_id = 0
         train_start = min_date
-        
+
         while True:
             train_end = train_start + train_delta
             test_start = train_end
             test_end = test_start + test_delta
-            
-            # Check if we have enough data
+
             if test_end > max_date:
                 break
-            
+
             yield CVFold(
                 fold_id=fold_id,
                 train_start=train_start,
@@ -80,75 +63,131 @@ class RollingWindowCV:
                 test_start=test_start,
                 test_end=test_end,
             )
-            
+
             fold_id += 1
-            train_start = train_start + test_delta  # Roll forward
+            train_start = train_start + increment_delta
     
     def get_n_splits(self, trips: pd.DataFrame) -> int:
-        """Count number of splits."""
         return sum(1 for _ in self.split(trips))
 
 
-def compute_actual_flow(
+def track_inventory(
     trips: pd.DataFrame,
-    stations: list,
+    initial_inventory: pd.Series,
     start_time: pd.Timestamp,
     end_time: pd.Timestamp,
     freq: str = "1h",
 ) -> pd.DataFrame:
-    """Compute actual net flow from trip data.
+    """Track actual inventory by applying trips to initial state.
     
-    Net flow = arrivals - departures per station per time period.
-    This is GROUND TRUTH - directly observable from the data.
+    This gives us GROUND TRUTH inventory - what actually happened.
     
     Args:
-        trips: Trip data
-        stations: List of station names
-        start_time: Start of time range
-        end_time: End of time range
-        freq: Time frequency for aggregation
+        trips: Trip data for the period
+        initial_inventory: Starting bike count per station
+        start_time: Start of tracking period
+        end_time: End of tracking period
+        freq: Time frequency
         
     Returns:
-        DataFrame with actual net flow (index=stations, columns=times)
+        DataFrame with actual inventory (index=stations, columns=times)
     """
-    # Filter to time range
-    mask = (trips["started_at"] >= start_time) & (trips["started_at"] < end_time)
-    trips_subset = trips[mask].copy()
-    
-    # Generate time buckets
+    stations = initial_inventory.index.tolist()
     times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
     
-    # Initialize flow DataFrame
-    flow = pd.DataFrame(0.0, index=stations, columns=times)
+    # Initialize
+    inventory = pd.DataFrame(
+        index=stations,
+        columns=times,
+        dtype=float
+    )
+    inventory[times[0]] = initial_inventory
     
-    if len(trips_subset) == 0:
-        return flow
+    # Filter trips to time range
+    mask = (trips["started_at"] >= start_time) & (trips["started_at"] < end_time)
+    period_trips = trips[mask].copy()
+    
+    if len(period_trips) == 0:
+        # No trips, inventory stays constant
+        for t in times:
+            inventory[t] = initial_inventory
+        return inventory
     
     # Bucket trips by hour
-    trips_subset["time_bucket"] = trips_subset["started_at"].dt.floor(freq)
+    period_trips["hour_bucket"] = period_trips["started_at"].dt.floor(freq)
     
-    # Compute departures per (station, time_bucket)
-    departures = (
-        trips_subset.groupby(["start_station_name", "time_bucket"])
-        .size()
-        .unstack(fill_value=0)
-    )
+    # Track hour by hour
+    current_inventory = initial_inventory.copy()
     
-    # Compute arrivals per (station, time_bucket)  
-    arrivals = (
-        trips_subset.groupby(["end_station_name", "time_bucket"])
-        .size()
-        .unstack(fill_value=0)
-    )
+    for i, t in enumerate(times[:-1]):
+        # Get trips in this hour
+        hour_trips = period_trips[period_trips["hour_bucket"] == t]
+        
+        if len(hour_trips) > 0:
+            # Count arrivals and departures
+            arrivals = hour_trips.groupby("end_station_name").size()
+            departures = hour_trips.groupby("start_station_name").size()
+            
+            # Apply to inventory
+            for station in stations:
+                arr = arrivals.get(station, 0)
+                dep = departures.get(station, 0)
+                current_inventory[station] = max(0, current_inventory[station] - dep + arr)
+        
+        # Store state at next time
+        inventory[times[i + 1]] = current_inventory.copy()
     
-    # Fill in the flow DataFrame
-    for station in stations:
-        for t in times:
-            dep = departures.loc[station, t] if (station in departures.index and t in departures.columns) else 0
-            arr = arrivals.loc[station, t] if (station in arrivals.index and t in arrivals.columns) else 0
-            flow.loc[station, t] = arr - dep
+    return inventory
+
+
+def compute_initial_inventory_for_fold(
+    trips: pd.DataFrame,
+    stations: list,
+    fold_start: pd.Timestamp,
+) -> pd.Series:
+    """Compute initial inventory at start of fold using backward tracking.
     
-    return flow
+    Uses trips before fold_start to infer the bike distribution.
+    
+    Args:
+        trips: All trip data
+        stations: List of station names
+        fold_start: Start time of the fold
+        
+    Returns:
+        Series with estimated bike count per station
+    """
+    # Get trips before fold start (use last week for burn-in)
+    burn_in_start = fold_start - pd.Timedelta(weeks=1)
+    mask = (trips["started_at"] >= burn_in_start) & (trips["started_at"] < fold_start)
+    burn_in_trips = trips[mask].copy()
+    
+    if len(burn_in_trips) == 0:
+        # No burn-in data, use uniform distribution
+        # Assume 50% of typical capacity (15 bikes)
+        return pd.Series(15.0, index=stations)
+    
+    # Track forward from zero to get ending state
+    inventory = {station: 0 for station in stations}
+    
+    burn_in_trips["hour_bucket"] = burn_in_trips["started_at"].dt.floor("1h")
+    hours = sorted(burn_in_trips["hour_bucket"].unique())
+    
+    for hour in hours:
+        hour_trips = burn_in_trips[burn_in_trips["hour_bucket"] == hour]
+        
+        arrivals = hour_trips.groupby("end_station_name").size()
+        departures = hour_trips.groupby("start_station_name").size()
+        
+        for station, count in arrivals.items():
+            if station in inventory:
+                inventory[station] += count
+        
+        for station, count in departures.items():
+            if station in inventory:
+                inventory[station] = max(0, inventory[station] - count)
+    
+    return pd.Series(inventory)
 
 
 def run_cross_validation(
@@ -158,10 +197,10 @@ def run_cross_validation(
     config: dict,
     verbose: bool = True,
 ) -> Tuple[List[Dict[str, float]], Dict[str, Tuple[float, float]]]:
-    """Run rolling window cross-validation for flow prediction.
+    """Run rolling window cross-validation for inventory prediction.
     
     Args:
-        model: Model instance (must have fit/predict_flow methods)
+        model: Model instance (must have fit/predict_inventory methods)
         trips: Trip data
         station_stats: Station information with capacity
         config: Configuration dictionary
@@ -174,16 +213,19 @@ def run_cross_validation(
     cv = RollingWindowCV(
         train_weeks=cv_config.get("train_weeks", 3),
         test_weeks=cv_config.get("test_weeks", 1),
+        increment_days=cv_config.get("increment_days", None),
     )
     
     stations = station_stats.index.tolist()
+    capacities = station_stats["capacity"].to_dict()
+    thresholds = config.get("thresholds", {"empty": 0.1, "full": 0.9})
     
     fold_results = []
     folds = list(cv.split(trips))
     
     if verbose:
         print(f"\nRunning {len(folds)}-fold cross-validation...")
-        print(f"Predicting net flow for {len(stations)} stations")
+        print(f"Predicting inventory for {len(stations)} stations")
     
     for fold in tqdm(folds, desc="CV Folds", disable=not verbose):
         # Split data
@@ -205,25 +247,43 @@ def run_cross_validation(
         # Fit model on training data
         model.fit(train_trips, station_stats)
         
-        # Compute actual flow for test period (GROUND TRUTH)
-        true_flow = compute_actual_flow(
-            test_trips,
+        # Compute initial inventory at start of test period
+        # Use end of training period to estimate starting state
+        initial_inventory = compute_initial_inventory_for_fold(
+            trips,
             stations,
+            fold.test_start,
+        )
+        
+        # Clamp to capacity
+        for station in stations:
+            cap = capacities.get(station, 30)
+            initial_inventory[station] = min(initial_inventory[station], cap)
+        
+        # Track actual inventory (GROUND TRUTH)
+        true_inventory = track_inventory(
+            test_trips,
+            initial_inventory,
             fold.test_start,
             fold.test_end,
             freq="1h",
         )
         
-        # Predict flow for test period
-        pred_flow = model.predict_flow(
-            stations,
+        # Predict inventory
+        pred_inventory = model.predict_inventory(
+            initial_inventory,
             fold.test_start,
             fold.test_end,
             freq="1h",
         )
         
         # Compute metrics
-        metrics = compute_flow_metrics(true_flow, pred_flow)
+        metrics = compute_inventory_metrics(
+            true_inventory,
+            pred_inventory,
+            capacities,
+            thresholds,
+        )
         metrics["fold_id"] = fold.fold_id
         metrics["train_start"] = str(fold.train_start.date())
         metrics["test_start"] = str(fold.test_start.date())
@@ -231,10 +291,11 @@ def run_cross_validation(
         fold_results.append(metrics)
         
         if verbose:
-            print(f"  Fold {fold.fold_id}: MAE={metrics['mae']:.2f}, "
-                  f"RMSE={metrics['rmse']:.2f}, "
-                  f"Direction Acc={metrics['direction_accuracy']:.1%}, "
-                  f"Corr={metrics['correlation']:.3f}")
+            print(f"  Fold {fold.fold_id}: "
+                  f"MAE={metrics.get('inventory_mae', 0):.2f} bikes, "
+                  f"Empty Recall={metrics.get('empty_recall', 0):.1%}, "
+                  f"Full Recall={metrics.get('full_recall', 0):.1%}, "
+                  f"State Acc={metrics.get('state_accuracy', 0):.1%}")
     
     # Summarize
     summary = summarize_fold_results(fold_results)
@@ -243,12 +304,17 @@ def run_cross_validation(
         print("\n" + "=" * 60)
         print("Cross-Validation Summary (mean ± std across folds):")
         print("=" * 60)
-        key_metrics = ["mae", "rmse", "direction_accuracy", "correlation", "high_flow_mae"]
+        key_metrics = [
+            "inventory_mae", "inventory_rmse", "correlation",
+            "empty_recall", "empty_precision", "empty_f1",
+            "full_recall", "full_precision", "full_f1",
+            "state_accuracy"
+        ]
         for metric in key_metrics:
             if metric in summary:
                 mean, std = summary[metric]
-                if "accuracy" in metric or "correlation" in metric:
-                    print(f"  {metric}: {mean:.3f} ± {std:.3f}")
+                if "recall" in metric or "precision" in metric or "accuracy" in metric or "f1" in metric:
+                    print(f"  {metric}: {mean:.1%} ± {std:.1%}")
                 else:
                     print(f"  {metric}: {mean:.2f} ± {std:.2f}")
     

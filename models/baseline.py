@@ -1,4 +1,4 @@
-"""Baseline model using historical average flow."""
+"""Temporal Flow model using historical average flow conditioned on time."""
 
 import pandas as pd
 import numpy as np
@@ -6,21 +6,22 @@ from typing import Dict, Any
 from .base import BaseModel
 
 
-class BaselineModel(BaseModel):
-    """Simple baseline model using historical average net flow.
+class TemporalFlowModel(BaseModel):
+    """Temporal flow model using time-conditioned historical average net flow.
     
     This model:
-    1. Computes average hourly net flow (arrivals - departures) per station
-    2. Predicts future flow by returning the historical average for that 
-       (station, hour, is_weekend) combination
+    1. Computes average hourly net flow (arrivals - departures) per station,
+       conditioned on hour of day and weekend/weekday
+    2. Predicts future inventory by applying the appropriate average flow:
+       inventory[t+1] = inventory[t] + avg_net_flow[station, hour, is_weekend]
     
-    This serves as a baseline to compare more sophisticated models against.
+    This captures both station-specific and temporal patterns in bike flow.
     """
     
     def __init__(self, config: dict):
         super().__init__(config)
-        self.hourly_net_flow = None  # Average net flow by (station, hour, is_weekend)
-        self.global_avg_flow = 0.0  # Fallback for missing combinations
+        self.hourly_net_flow = {}  # (station, hour, is_weekend) -> avg net flow
+        self.global_avg_flow = 0.0
         self.stations = []
         
     def fit(
@@ -36,8 +37,9 @@ class BaselineModel(BaseModel):
         """
         print(f"Fitting {self.get_name()} on {len(trips):,} trips...")
         
-        # Store list of stations
+        # Store stations and capacities
         self.stations = station_stats.index.tolist()
+        self.station_capacities = station_stats["capacity"].to_dict()
         
         # Ensure time features exist
         trips = trips.copy()
@@ -85,13 +87,13 @@ class BaselineModel(BaseModel):
         
         flow_df["avg_net_flow"] = flow_df.apply(normalize_flow, axis=1)
         
-        # Store as lookup dictionary: (station, hour, is_weekend) -> avg_net_flow
+        # Store as lookup dictionary
         self.hourly_net_flow = {}
         for _, row in flow_df.iterrows():
             key = (row["station"], int(row["hour"]), bool(row["is_weekend"]))
             self.hourly_net_flow[key] = row["avg_net_flow"]
         
-        # Compute global average as fallback (should be ~0 for balanced system)
+        # Compute global average as fallback
         self.global_avg_flow = flow_df["avg_net_flow"].mean()
         
         self.is_fitted = True
@@ -99,29 +101,32 @@ class BaselineModel(BaseModel):
         
         return self
     
-    def predict_flow(
+    def predict_inventory(
         self,
-        stations: list,
+        initial_inventory: pd.Series,
         start_time: pd.Timestamp,
         end_time: pd.Timestamp,
         freq: str = "1h",
     ) -> pd.DataFrame:
-        """Predict net flow by returning historical averages.
+        """Predict inventory by applying average hourly net flow.
         
         Args:
-            stations: List of station names
-            start_time: Start of prediction period
-            end_time: End of prediction period
+            initial_inventory: Starting bike count per station
+            start_time: Start time for prediction
+            end_time: End time for prediction
             freq: Time frequency
             
         Returns:
-            DataFrame with predicted net flow per station per time period
+            DataFrame with predicted inventory at each hour
         """
         if not self.is_fitted:
             raise ValueError("Model must be fitted before prediction")
         
         # Generate time periods
         times = pd.date_range(start=start_time, end=end_time, freq=freq, inclusive="left")
+        
+        # Get stations from initial inventory
+        stations = initial_inventory.index.tolist()
         
         # Initialize predictions
         predictions = pd.DataFrame(
@@ -130,16 +135,32 @@ class BaselineModel(BaseModel):
             dtype=float
         )
         
-        # Fill in predictions using historical averages
-        for t in times:
+        # Set initial state
+        predictions[times[0]] = initial_inventory
+        
+        # Simulate forward
+        current_inventory = initial_inventory.copy()
+        
+        for i, t in enumerate(times[1:], 1):
             hour = t.hour
             is_weekend = t.dayofweek in [5, 6]
             
+            # Apply net flow for each station
+            new_inventory = current_inventory.copy()
+            
             for station in stations:
                 key = (station, hour, is_weekend)
-                predictions.loc[station, t] = self.hourly_net_flow.get(
-                    key, self.global_avg_flow
-                )
+                net_flow = self.hourly_net_flow.get(key, self.global_avg_flow)
+                
+                # Update inventory
+                new_bikes = current_inventory[station] + net_flow
+                
+                # Clamp to valid range [0, capacity]
+                capacity = self.station_capacities.get(station, 30)
+                new_inventory[station] = np.clip(new_bikes, 0, capacity)
+            
+            predictions[t] = new_inventory
+            current_inventory = new_inventory
         
         return predictions
     

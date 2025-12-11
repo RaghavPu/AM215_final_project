@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Main script to run the CitiBike flow prediction pipeline.
+Main script to run the CitiBike inventory prediction pipeline.
 
 Usage:
     python run.py                    # Run with default config
     python run.py --config custom.yaml  # Run with custom config
     python run.py --model baseline   # Override model choice
+    python run.py --compare          # Compare against cached results
 """
 
 import argparse
 import json
 from pathlib import Path
 from datetime import datetime
+from glob import glob
 
 from utils import load_config, load_trip_data, load_station_info, prepare_data
 from models import get_model
@@ -21,7 +23,7 @@ from evaluation import run_cross_validation
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="CitiBike Flow Prediction Pipeline"
+        description="CitiBike Inventory Prediction Pipeline"
     )
     parser.add_argument(
         "--config",
@@ -46,7 +48,88 @@ def parse_args():
         action="store_true",
         help="Skip cross-validation (just fit model)",
     )
+    parser.add_argument(
+        "--compare",
+        type=str,
+        default=None,
+        help="Compare against cached results for specified model (e.g., --compare baseline)",
+    )
     return parser.parse_args()
+
+
+def load_cached_results(output_dir: Path, model_name: str) -> dict:
+    """Load the most recent cached results for a model."""
+    pattern = output_dir / f"cv_results_{model_name}_*.json"
+    files = sorted(glob(str(pattern)))
+    
+    if not files:
+        return None
+    
+    latest_file = files[-1]
+    with open(latest_file, "r") as f:
+        results = json.load(f)
+    
+    print(f"Loaded cached {model_name} results from: {latest_file}")
+    return results
+
+
+def compare_results(current: dict, other: dict):
+    """Print comparison between current and other model results."""
+    print("\n" + "=" * 70)
+    print("MODEL COMPARISON")
+    print("=" * 70)
+    
+    current_summary = current.get("summary", {})
+    other_summary = other.get("summary", {})
+    
+    current_name = current.get("model", "Current")
+    other_name = other.get("model", "Other")
+    
+    print(f"\n{'Metric':<25} {other_name:>15} {current_name:>15} {'Δ':>12} {'Better?':>10}")
+    print("-" * 70)
+    
+    # Key metrics to compare (lower is better for errors, higher for recall/accuracy)
+    key_metrics = [
+        ("inventory_mae", "lower"),
+        ("inventory_rmse", "lower"),
+        ("correlation", "higher"),
+        ("empty_recall", "higher"),
+        ("empty_precision", "higher"),
+        ("full_recall", "higher"),
+        ("full_precision", "higher"),
+        ("state_accuracy", "higher"),
+    ]
+    
+    improvements = 0
+    
+    for metric, better_direction in key_metrics:
+        if metric in current_summary and metric in other_summary:
+            curr_mean = current_summary[metric]["mean"]
+            other_mean = other_summary[metric]["mean"]
+            
+            delta = curr_mean - other_mean
+            
+            if better_direction == "lower":
+                is_better = delta < 0
+            else:
+                is_better = delta > 0
+            
+            if is_better:
+                improvements += 1
+            
+            delta_str = f"{delta:+.4f}"
+            better_str = "✅ Yes" if is_better else "❌ No"
+            
+            # Format based on metric type
+            if "recall" in metric or "precision" in metric or "accuracy" in metric:
+                print(f"{metric:<25} {other_mean:>14.1%} {curr_mean:>14.1%} {delta_str:>12} {better_str:>10}")
+            elif "correlation" in metric:
+                print(f"{metric:<25} {other_mean:>15.3f} {curr_mean:>15.3f} {delta_str:>12} {better_str:>10}")
+            else:
+                print(f"{metric:<25} {other_mean:>15.2f} {curr_mean:>15.2f} {delta_str:>12} {better_str:>10}")
+    
+    print("-" * 70)
+    print(f"\nImproved on {improvements}/{len(key_metrics)} metrics")
 
 
 def main():
@@ -55,7 +138,7 @@ def main():
     
     # Load configuration
     print("=" * 60)
-    print("CitiBike Flow Prediction Pipeline")
+    print("CitiBike Inventory Prediction Pipeline")
     print("=" * 60)
     
     config = load_config(args.config)
@@ -131,6 +214,14 @@ def main():
             json.dump(results, f, indent=2, default=str)
         
         print(f"\nResults saved to: {results_file}")
+        
+        # Compare against other model if requested
+        if args.compare:
+            other_results = load_cached_results(output_dir, args.compare)
+            if other_results:
+                compare_results(results, other_results)
+            else:
+                print(f"\nNo cached results found for model: {args.compare}")
     
     else:
         # Just fit on all data
@@ -148,4 +239,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

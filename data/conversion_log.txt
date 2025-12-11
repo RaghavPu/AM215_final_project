@@ -1,0 +1,101 @@
+======================================================================
+CitiBike CSV to Parquet Converter
+======================================================================
+
+Searching for CSV files in:
+  - /Users/anastasiaahani/Downloads
+  - /Users/anastasiaahani/classes/AM215/git/AM215_final_project/data/raw
+
+Found 32 CSV file(s):
+  - 2025-05: 202505-citibike-tripdata_4.csv
+  - 2025-05: 202505-citibike-tripdata_5.csv
+  - 2025-05: 202505-citibike-tripdata_1.csv
+  - 2025-05: 202505-citibike-tripdata_2.csv
+  - 2025-05: 202505-citibike-tripdata_3.csv
+  - 2025-06: 202506-citibike-tripdata_2.csv
+  - 2025-06: 202506-citibike-tripdata_3.csv
+  - 2025-06: 202506-citibike-tripdata_1.csv
+  - 2025-06: 202506-citibike-tripdata_4.csv
+  - 2025-06: 202506-citibike-tripdata_5.csv
+  - 2025-07: 202507-citibike-tripdata_5.csv
+  - 2025-07: 202507-citibike-tripdata_4.csv
+  - 2025-07: 202507-citibike-tripdata_1.csv
+  - 2025-07: 202507-citibike-tripdata_3.csv
+  - 2025-07: 202507-citibike-tripdata_2.csv
+  - 2025-08: 202508-citibike-tripdata_6.csv
+  - 2025-08: 202508-citibike-tripdata_4.csv
+  - 2025-08: 202508-citibike-tripdata_5.csv
+  - 2025-08: 202508-citibike-tripdata_1.csv
+  - 2025-08: 202508-citibike-tripdata_2.csv
+  - 2025-08: 202508-citibike-tripdata_3.csv
+  - 2025-09: 202509-citibike-tripdata_3.csv
+  - 2025-09: 202509-citibike-tripdata_2.csv
+  - 2025-09: 202509-citibike-tripdata_1.csv
+  - 2025-09: 202509-citibike-tripdata_5.csv
+  - 2025-09: 202509-citibike-tripdata_4.csv
+  - 2025-09: 202509-citibike-tripdata_6.csv
+  - 2025-10: 202510-citibike-tripdata_3.csv
+  - 2025-10: 202510-citibike-tripdata_2.csv
+  - 2025-10: 202510-citibike-tripdata_1.csv
+  - 2025-10: 202510-citibike-tripdata_5.csv
+  - 2025-10: 202510-citibike-tripdata_4.csv
+
+Converting first 6 month(s)...
+
+======================================================================
+Processing: 2025-05
+======================================================================
+  Reading CSV: 202505-citibike-tripdata_4.csv
+  ✓ Converted 1,000,000 rows in 0.7s
+  ✓ 186.4 MB → 29.7 MB (6.3x compression)
+
+======================================================================
+Processing: 2025-05
+======================================================================
+  Reading CSV: 202505-citibike-tripdata_5.csv
+  ✓ Converted 325,553 rows in 0.4s
+  ✓ 60.7 MB → 9.8 MB (6.2x compression)
+
+======================================================================
+Processing: 2025-05
+======================================================================
+  Reading CSV: 202505-citibike-tripdata_1.csv
+  ✓ Converted 1,000,000 rows in 0.8s
+  ✓ 185.9 MB → 29.8 MB (6.2x compression)
+
+======================================================================
+Processing: 2025-05
+======================================================================
+  Reading CSV: 202505-citibike-tripdata_2.csv
+  ✓ Converted 1,000,000 rows in 0.6s
+  ✓ 186.6 MB → 29.7 MB (6.3x compression)
+
+======================================================================
+Processing: 2025-05
+======================================================================
+  Reading CSV: 202505-citibike-tripdata_3.csv
+  ✓ Converted 1,000,000 rows in 1.2s
+  ✓ 185.8 MB → 29.8 MB (6.2x compression)
+
+======================================================================
+Processing: 2025-06
+======================================================================
+  Reading CSV: 202506-citibike-tripdata_2.csv
+  ✓ Converted 1,000,000 rows in 0.9s
+  ✓ 186.5 MB → 29.6 MB (6.3x compression)
+
+======================================================================
+CONVERSION SUMMARY
+======================================================================
+Successful: 6/6
+Failed: 0
+
+Total rows: 5,325,553
+Total Parquet size: 158.4 MB (0.15 GB)
+Average compression: 6.3x
+
+✓ Stats saved to: /Users/anastasiaahani/classes/AM215/git/AM215_final_project/data/conversion_stats.json
+
+✓ Parquet files saved to: /Users/anastasiaahani/classes/AM215/git/AM215_final_project/data/parquet/trips
+
+======================================================================
