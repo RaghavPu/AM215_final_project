@@ -17,8 +17,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evaluation import compute_inventory_metrics, inventory_to_states
-from models import MarkovModel, TemporalFlowModel
+from citibike.evaluation import compute_inventory_metrics, inventory_to_states
+from citibike.models import MarkovModel, TemporalFlowModel
 
 # Path to golden files
 GOLDEN_DIR = Path(__file__).parent / "golden_files"
@@ -278,7 +278,7 @@ class TestEndToEndRegression:
 
     def test_full_pipeline_metrics(self):
         """Test that full pipeline produces consistent metrics."""
-        from evaluation import track_inventory
+        from citibike.evaluation import track_inventory
 
         trips = create_deterministic_trips()
         station_stats = create_deterministic_station_stats()

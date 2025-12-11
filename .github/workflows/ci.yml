@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e .  # Install package in dev mode (src layout)
           pip install -r requirements-dev.txt
       
       - name: Run Ruff formatter check
@@ -39,7 +39,7 @@ jobs:
       
       - name: Run type checker (mypy)
         run: |
-          mypy models/ evaluation/ utils/ --ignore-missing-imports || echo "::warning::mypy found type issues (non-blocking)"
+          mypy src/citibike/ --ignore-missing-imports || echo "::warning::mypy found type issues (non-blocking)"
         continue-on-error: true
       
       - name: Run tests with pytest
@@ -48,7 +48,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          pytest tests/ --cov=models --cov=evaluation --cov=utils --cov-report=term-missing --cov-report=xml
+          pytest tests/ --cov=src/citibike --cov-report=term-missing --cov-report=xml
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -75,7 +75,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e .  # Install package in dev mode
           pip install -r requirements-dev.txt
       
       - name: Run regression tests

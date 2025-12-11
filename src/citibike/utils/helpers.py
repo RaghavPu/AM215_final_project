@@ -20,5 +20,10 @@ def load_config(config_path: str = "config.yaml") -> dict:
 
 
 def get_project_root() -> Path:
-    """Get the project root directory."""
-    return Path(__file__).parent.parent
+    """Get the project root directory.
+
+    Returns the root of the project (where config.yaml lives),
+    navigating up from src/citibike/utils/.
+    """
+    # Navigate up: utils -> citibike -> src -> project_root
+    return Path(__file__).parent.parent.parent.parent

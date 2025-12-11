@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# Add src to path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
-from evaluation import run_cross_validation
-from models import MarkovModel
-from utils import load_config, load_station_info, load_trip_data, prepare_data
+from citibike.evaluation import run_cross_validation
+from citibike.models import MarkovModel
+from citibike.utils import load_config, load_station_info, load_trip_data, prepare_data
 
 
 def run_experiment(config, train_weeks, test_weeks, increment_days=7):

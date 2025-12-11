@@ -1,5 +1,9 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "citibike-inventory-prediction"
+name = "citibike"
 version = "0.1.0"
 description = "CitiBike NYC bike station inventory prediction models"
 requires-python = ">=3.10"
@@ -85,8 +89,11 @@ ignore = [
     "SIM108", # use ternary operator instead of if-else
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff.lint.isort]
-known-first-party = ["models", "evaluation", "utils"]
+known-first-party = ["citibike"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -113,7 +120,7 @@ exclude = [
 # warn_unused_ignores = true
 
 [tool.coverage.run]
-source = ["models", "evaluation", "utils"]
+source = ["src/citibike"]
 omit = ["tests/*", "venv/*", "scripts/*"]
 branch = true
 

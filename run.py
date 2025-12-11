@@ -17,9 +17,9 @@ from datetime import datetime
 from glob import glob
 from pathlib import Path
 
-from evaluation import run_cross_validation
-from models import get_model
-from utils import load_config, load_station_info, load_trip_data, prepare_data
+from citibike.evaluation import run_cross_validation
+from citibike.models import get_model
+from citibike.utils import load_config, load_station_info, load_trip_data, prepare_data
 
 # Configure logging
 logging.basicConfig(
