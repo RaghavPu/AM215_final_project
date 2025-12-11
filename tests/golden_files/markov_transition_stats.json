@@ -1,0 +1,9 @@
+{
+  "n_stations": 3,
+  "n_matrices": 48,
+  "global_matrix_shape": [
+    3,
+    3
+  ],
+  "global_matrix_nnz": 9
+}
