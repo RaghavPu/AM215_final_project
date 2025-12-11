@@ -26,8 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .  # Install package in dev mode (src layout)
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev]"  # Install package + dev dependencies
       
       - name: Run Ruff formatter check
         run: |
@@ -75,8 +74,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .  # Install package in dev mode
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev]"  # Install package + dev dependencies
       
       - name: Run regression tests
         run: |
