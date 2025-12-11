@@ -5,11 +5,12 @@ This script looks for CSV files you've already downloaded and converts them to P
 You can manually download files from: https://s3.amazonaws.com/tripdata/index.html
 """
 
-import duckdb
-from pathlib import Path
-import time
 import json
 import re
+import time
+from pathlib import Path
+
+import duckdb
 
 
 def find_csv_files(search_paths):
@@ -32,21 +33,18 @@ def find_csv_files(search_paths):
             continue
 
         # Find CSV files matching CitiBike pattern
-        for csv_file in path.rglob('*citibike*.csv'):
+        for csv_file in path.rglob("*citibike*.csv"):
             # Extract year/month from filename
-            match = re.search(r'(\d{4})(\d{2})', csv_file.name)
+            match = re.search(r"(\d{4})(\d{2})", csv_file.name)
             if match:
                 year = int(match.group(1))
                 month = int(match.group(2))
 
-                csv_files.append({
-                    'path': csv_file,
-                    'year': year,
-                    'month': month,
-                    'name': csv_file.name
-                })
+                csv_files.append(
+                    {"path": csv_file, "year": year, "month": month, "name": csv_file.name}
+                )
 
-    return sorted(csv_files, key=lambda x: (x['year'], x['month']))
+    return sorted(csv_files, key=lambda x: (x["year"], x["month"]))
 
 
 def convert_csv_to_parquet(csv_path, parquet_path, year, month):
@@ -100,20 +98,22 @@ def convert_csv_to_parquet(csv_path, parquet_path, year, month):
         compression_ratio = csv_size / parquet_size if parquet_size > 0 else 0
 
         print(f"  ✓ Converted {row_count:,} rows in {elapsed:.1f}s")
-        print(f"  ✓ {csv_size/1024/1024:.1f} MB → {parquet_size/1024/1024:.1f} MB ({compression_ratio:.1f}x compression)")
+        print(
+            f"  ✓ {csv_size / 1024 / 1024:.1f} MB → {parquet_size / 1024 / 1024:.1f} MB ({compression_ratio:.1f}x compression)"
+        )
 
         return {
-            'success': True,
-            'row_count': row_count,
-            'csv_size_mb': csv_size / 1024 / 1024,
-            'parquet_size_mb': parquet_size / 1024 / 1024,
-            'compression_ratio': compression_ratio,
-            'time_seconds': elapsed
+            "success": True,
+            "row_count": row_count,
+            "csv_size_mb": csv_size / 1024 / 1024,
+            "parquet_size_mb": parquet_size / 1024 / 1024,
+            "compression_ratio": compression_ratio,
+            "time_seconds": elapsed,
         }
 
     except Exception as e:
         print(f"  ✗ Error: {e}")
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
 
 
 def main(search_paths=None, months_to_convert=None):
@@ -128,15 +128,12 @@ def main(search_paths=None, months_to_convert=None):
 
     # Default search paths
     if search_paths is None:
-        search_paths = [
-            Path.home() / 'Downloads',
-            project_root / 'data' / 'raw'
-        ]
+        search_paths = [Path.home() / "Downloads", project_root / "data" / "raw"]
 
-    print("="*70)
+    print("=" * 70)
     print("CitiBike CSV to Parquet Converter")
-    print("="*70)
-    print(f"\nSearching for CSV files in:")
+    print("=" * 70)
+    print("\nSearching for CSV files in:")
     for path in search_paths:
         print(f"  - {path}")
     print()
@@ -167,63 +164,68 @@ def main(search_paths=None, months_to_convert=None):
     all_stats = []
 
     for file_info in csv_files:
-        print("="*70)
+        print("=" * 70)
         print(f"Processing: {file_info['year']}-{file_info['month']:02d}")
-        print("="*70)
+        print("=" * 70)
 
-        parquet_path = (project_root / 'data' / 'parquet' / 'trips' /
-                       f"year={file_info['year']}" / f"month={file_info['month']:02d}" /
-                       'trips.parquet')
-
-        stats = convert_csv_to_parquet(
-            file_info['path'],
-            parquet_path,
-            file_info['year'],
-            file_info['month']
+        parquet_path = (
+            project_root
+            / "data"
+            / "parquet"
+            / "trips"
+            / f"year={file_info['year']}"
+            / f"month={file_info['month']:02d}"
+            / "trips.parquet"
         )
 
-        stats.update({
-            'year': file_info['year'],
-            'month': file_info['month'],
-            'source_file': str(file_info['path'])
-        })
+        stats = convert_csv_to_parquet(
+            file_info["path"], parquet_path, file_info["year"], file_info["month"]
+        )
+
+        stats.update(
+            {
+                "year": file_info["year"],
+                "month": file_info["month"],
+                "source_file": str(file_info["path"]),
+            }
+        )
 
         all_stats.append(stats)
         print()
 
     # Summary
-    print("="*70)
+    print("=" * 70)
     print("CONVERSION SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
-    successful = [s for s in all_stats if s.get('success')]
-    failed = [s for s in all_stats if not s.get('success')]
+    successful = [s for s in all_stats if s.get("success")]
+    failed = [s for s in all_stats if not s.get("success")]
 
     print(f"Successful: {len(successful)}/{len(all_stats)}")
     print(f"Failed: {len(failed)}")
 
     if successful:
-        total_rows = sum(s['row_count'] for s in successful)
-        total_parquet_mb = sum(s['parquet_size_mb'] for s in successful)
-        avg_compression = sum(s['compression_ratio'] for s in successful) / len(successful)
+        total_rows = sum(s["row_count"] for s in successful)
+        total_parquet_mb = sum(s["parquet_size_mb"] for s in successful)
+        avg_compression = sum(s["compression_ratio"] for s in successful) / len(successful)
 
         print(f"\nTotal rows: {total_rows:,}")
-        print(f"Total Parquet size: {total_parquet_mb:.1f} MB ({total_parquet_mb/1024:.2f} GB)")
+        print(f"Total Parquet size: {total_parquet_mb:.1f} MB ({total_parquet_mb / 1024:.2f} GB)")
         print(f"Average compression: {avg_compression:.1f}x")
 
     if failed:
-        print(f"\nFailed conversions:")
+        print("\nFailed conversions:")
         for s in failed:
             print(f"  - {s['year']}-{s['month']:02d}: {s.get('error', 'unknown')}")
 
     # Save stats
-    stats_path = project_root / 'data' / 'conversion_stats.json'
-    with open(stats_path, 'w') as f:
+    stats_path = project_root / "data" / "conversion_stats.json"
+    with open(stats_path, "w") as f:
         json.dump(all_stats, f, indent=2, default=str)
 
     print(f"\n✓ Stats saved to: {stats_path}")
     print(f"\n✓ Parquet files saved to: {project_root / 'data' / 'parquet' / 'trips'}")
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
 
 
 if __name__ == "__main__":

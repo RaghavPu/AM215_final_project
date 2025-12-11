@@ -51,8 +51,15 @@ select = [
 ]
 ignore = [
     "E501",   # line too long (handled by formatter)
+    "E402",   # module level import not at top (needed for sys.path manipulation)
+    "E722",   # bare except (legacy code)
+    "B006",   # mutable default argument (legacy code)
+    "B007",   # unused loop variable (common in enumerate patterns)
     "B008",   # do not perform function calls in argument defaults
     "B905",   # zip without explicit strict
+    "C401",   # unnecessary generator (style preference)
+    "F841",   # unused variable (common in plotting code)
+    "SIM105", # use contextlib.suppress (legacy code style)
     "SIM108", # use ternary operator instead of if-else
 ]
 
