@@ -1,0 +1,22 @@
+{
+  "computed_at": "2025-12-06T19:04:55.308913",
+  "months": [
+    "202509-citibike-tripdata",
+    "202510-citibike-tripdata"
+  ],
+  "total_stations": 2318,
+  "results": {
+    "202509-citibike-tripdata": {
+      "n_trips": 5287447,
+      "n_stations": 2196,
+      "total_bikes_start": 59533,
+      "total_bikes_end": 59533
+    },
+    "202510-citibike-tripdata": {
+      "n_trips": 4731900,
+      "n_stations": 2216,
+      "total_bikes_start": 59405,
+      "total_bikes_end": 59405
+    }
+  }
+}
