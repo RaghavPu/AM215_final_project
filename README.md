@@ -195,6 +195,19 @@ Core dependencies (see `pyproject.toml` for full list):
 - `duckdb` - Efficient data querying
 - `pyyaml` - Configuration parsing
 
+## Documentation
+
+Full documentation is available at: **[GitHub Pages](https://stasahani1.github.io/AM215_final_project/)**
+
+To build documentation locally:
+
+```bash
+pip install -e ".[docs]"
+cd docs
+make html
+# Open _build/html/index.html in your browser
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

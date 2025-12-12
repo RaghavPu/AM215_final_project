@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Models &#8212; CitiBike Inventory Prediction 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="models">
+<h1>Models<a class="headerlink" href="#models" title="Link to this heading">¶</a></h1>
+<p>This project implements several models for predicting bike station inventory.</p>
+<section id="model-hierarchy">
+<h2>Model Hierarchy<a class="headerlink" href="#model-hierarchy" title="Link to this heading">¶</a></h2>
+<p>All models inherit from <code class="docutils literal notranslate"><span class="pre">BaseModel</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>BaseModel (ABC)
+├── PersistenceModel
+├── StationAverageModel
+├── TemporalFlowModel
+└── MarkovModel
+</pre></div>
+</div>
+</section>
+<section id="persistencemodel">
+<h2>PersistenceModel<a class="headerlink" href="#persistencemodel" title="Link to this heading">¶</a></h2>
+<p>The simplest baseline model that assumes inventory stays constant.</p>
+<p><strong>Use case</strong>: Establishing a lower bound for model performance.</p>
+</section>
+<section id="stationaveragemodel">
+<h2>StationAverageModel<a class="headerlink" href="#stationaveragemodel" title="Link to this heading">¶</a></h2>
+<p>Predicts inventory based on historical average net flow per station.</p>
+<p><strong>Parameters</strong>: None</p>
+<p><strong>Use case</strong>: Simple baseline that captures station-level trends.</p>
+</section>
+<section id="temporalflowmodel">
+<h2>TemporalFlowModel<a class="headerlink" href="#temporalflowmodel" title="Link to this heading">¶</a></h2>
+<p>Time-conditioned flow predictions using hour-of-day and weekend patterns.</p>
+<p><strong>Parameters</strong>:</p>
+<ul class="simple">
+<li><p>Learns flow patterns conditioned on:
+- Hour of day (0-23)
+- Weekend vs. weekday</p></li>
+</ul>
+<p><strong>Use case</strong>: Captures temporal patterns in bike usage.</p>
+</section>
+<section id="markovmodel">
+<h2>MarkovModel<a class="headerlink" href="#markovmodel" title="Link to this heading">¶</a></h2>
+<p>Markov chain model with transition matrices and Monte Carlo simulation.</p>
+<p><strong>Parameters</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">smoothing_alpha</span></code>: Laplace smoothing parameter (default: 0.0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">min_transitions</span></code>: Minimum transitions required (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_simulations</span></code>: Number of Monte Carlo simulations (default: 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">random_seed</span></code>: Seed for reproducibility (default: None)</p></li>
+</ul>
+<p><strong>Use case</strong>: Best performing model, captures stochastic dynamics.</p>
+</section>
+<section id="model-selection">
+<h2>Model Selection<a class="headerlink" href="#model-selection" title="Link to this heading">¶</a></h2>
+<p>Use the factory function to create models:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">citibike.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_model</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;markov&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CitiBike Inventory Prediction</a></h1>
+
+
+
+<p class="blurb">Bike station inventory prediction using Markov chains</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=stasahani1&repo=AM215_final_project&type=star&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model-hierarchy">Model Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#persistencemodel">PersistenceModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stationaveragemodel">StationAverageModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#temporalflowmodel">TemporalFlowModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#markovmodel">MarkovModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-selection">Model Selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="quickstart.html" title="previous chapter">Quick Start</a></li>
+      <li>Next: <a href="api.html" title="next chapter">API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, AM215 Final Project Team.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/models.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
