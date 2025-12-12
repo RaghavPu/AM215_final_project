@@ -1,0 +1,46 @@
+# Fast config for profiling - fewer folds
+data:
+  trip_data_dir: "data"
+  station_info_path: "data/stations/station_info.csv"
+  inventory_dir: "data/inventory"
+  output_dir: "outputs"
+  use_parquet: true
+  parquet_dir: "data/parquet/trips"
+
+time:
+  start_date: "2025-09-01"
+  end_date: "2025-10-15"
+
+# FAST: Only 2 folds with weekly increments
+cross_validation:
+  train_weeks: 2
+  test_weeks: 1
+  increment_days: 7  # Weekly increments (fewer folds)
+  min_folds: 2
+
+stations:
+  min_trips: 100
+  lat_min: 40.4
+  lat_max: 41.0
+  lng_min: -74.3
+  lng_max: -73.6
+
+thresholds:
+  empty: 0.1
+  full: 0.9
+
+model:
+  name: "markov"
+  markov:
+    smoothing_alpha: 0.0
+    min_transitions: 10
+    n_simulations: 1
+    random_seed: 42
+
+evaluation:
+  freq: "1h"
+
+logging:
+  level: "INFO"
+  save_predictions: false
+
