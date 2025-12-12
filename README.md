@@ -181,17 +181,9 @@ mypy src/citibike/
 
 ## Performance & Concurrency
 
-### Why No Parallelization?
+See [`docs/PROFILING_ANALYSIS.md`](docs/PROFILING_ANALYSIS.md) for detailed profiling results.
 
-This project does **not** use `multiprocessing` or `threading` for the following reasons:
-
-1. **Sequential Data Dependencies**: Our prediction models rely on **time-series data** where each timestep depends on the previous state. The Markov model simulates inventory trajectories where `inventory[t+1]` depends on `inventory[t]`, making parallelization across time impossible.
-
-2. **Station-Level Dependencies**: While stations could theoretically be processed in parallel, the overhead of spawning processes outweighs the benefits for our dataset size (~50 stations, hourly predictions over 2-week windows).
-
-4. **Cross-Validation Structure**: Rolling window CV requires sequential fold execution since each fold's training data must precede its test data temporally.
-
-**Conclusion**: The inherently sequential nature of time-series prediction and the moderate dataset size make parallelization unnecessary and potentially counterproductive due to process spawning overhead.
+**Summary**: This codebase is **CPU-bound** (not I/O-bound). Data loading is only 7% of runtime — the bottleneck is pandas indexing and state computation. Parallelization is not used due to sequential time-series dependencies.
 
 ## Dependencies
 
