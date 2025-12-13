@@ -197,7 +197,7 @@ Core dependencies (see `pyproject.toml` for full list):
 
 ## Documentation
 
-Full documentation is available at: **[GitHub Pages](https://stasahani1.github.io/AM215_final_project/)**
+Full documentation is available at: **[GitHub Pages](https://raghavpu.github.io/AM215_final_project/index.html)**
 
 To build documentation locally:
 
